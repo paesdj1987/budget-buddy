@@ -1,0 +1,24 @@
+- app.py          # Inicializa o app Dash e registra callbacks
+- index.txt       # link para fontes
+- layouts/        # Armazena os layouts de cada página
+  - __init__.py   # (vazio)
+  - sidebar.py    # Define o sidebar
+  - home_page.py  # Layout da página inicial
+  - manual_page.py  # Layout da página de Manual
+  - orcamento_simples_page.py  # Layout da página de Orçamento Simples
+  - orcamento_completo_page.py  # Layout da página de Orçamento Completo
+  - relatorio_simples_page.py  # Layout da página de Relatórios Simples
+  - relatorio_completo_page.py  # Layout da página de Relatórios Completo
+- callbacks/
+  - __init__.py   # (vazio)
+  - callbacks_sidebar.py
+  - callbacks_completo.py  # Contém o callbacks do orcamento_completo_page
+  - callbacks_simples.py  # Contém os callbacks do orcamento_simples_page
+- assets/
+  - styles.css    # Estilos customizados
+  - imagem_init.jpg # Imagem de fundo ou usada na página inicial
+  - pdflogo.png
+  - roteiro.pdf
+  - logoor.png
+  - logo2.png
+  - logo.png 

@@ -1,0 +1,1033 @@
+# callbacks_simples.py
+
+import matplotlib
+matplotlib.use('Agg')  
+import plotly.graph_objs as go
+import pandas as pd
+import matplotlib.pyplot as plt
+import io
+import tempfile
+import textwrap
+import datetime
+from matplotlib import cm, colors  
+from dash.dependencies import Input, Output, State
+from dash.exceptions import PreventUpdate
+from dash import dcc
+from dash import callback_context
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.pdfgen import canvas
+from reportlab.lib import colors
+from matplotlib.colors import LinearSegmentedColormap
+from reportlab.lib.units import inch
+from reportlab.lib.colors import HexColor
+from PIL import Image
+
+
+# Função para converter valores de string no formato "000.000.000,00" para float
+def convert_to_float(value):
+    try:
+        if isinstance(value, str):
+            # Remove todos os pontos (separadores de milhares) e troca a vírgula pelo ponto como separador decimal
+            value = value.replace('.', '').replace(',', '.')
+        return float(value)
+    except (ValueError, TypeError):
+        return 0.0  # Retorna 0.0 se a conversão falhar
+
+# Função para converter float para string no formato "000.000.000,00"
+def convert_from_float(value):
+    try:
+        return '{:,.2f}'.format(value).replace(',', 'X').replace('.', ',').replace('X', '.')
+    except (ValueError, TypeError):
+        return '0,00'
+
+def register_callbacks_simples(app):
+    # Definir cores personalizadas (custom_colors)
+    custom_colors = [
+        '#FFF3E0', '#FFE0B2', '#FFCC80', '#FFB74D', '#FFA726',
+        '#FF9800', '#FB8C00', '#F57C00', '#EF6C00', '#E65100',
+        '#DD2C00'
+    ]
+    
+    # Callback para preenchimento da lista suspensa -------------------------
+    @app.callback(
+    [
+        Output('fechamento-perimetral', 'value'),
+        Output('meio-fio', 'value'),
+        Output('rede-eletrica', 'value'),
+        Output('rede-agua', 'value'),
+        Output('rede-drenagem', 'value'),
+        Output('rede-esgoto', 'value'),
+        Output('pavimentacao', 'value'),
+        Output('supressao-vegetacao', 'value'),
+        Output('custo-terraplanagem', 'value'),
+        Output('edificacoes', 'value'),
+        Output('quadra-society', 'value'),
+        Output('dados-incc-antigo', 'value'),
+    ],
+    Input('empreendimento-aplicar-button', 'n_clicks'),
+    State('empreendimento-dropdown', 'value')
+    )
+    def aplicar_empreendimento(n_clicks, empreendimento):
+        if not n_clicks:
+            raise PreventUpdate
+        
+        if empreendimento == 'default':
+            return [None]*28
+        
+        if empreendimento == 'economico':
+            return [
+                '97.33',
+                '56.09',
+                '399.33',
+                '94.65',
+                '492.23',
+                '410.49',
+                '141.34',
+                '0.71',
+                '25.39',
+                '3569.14',
+                '469.09',
+                '1149,17'
+            ]
+        
+        if empreendimento == 'medio_alto':
+            return [
+                '83.58',
+                '81.23',
+                '1658.88',
+                '582.88',
+                '492.23',
+                '137.88',
+                '148.75',
+                '1.32',
+                '25.39',
+                '3143.09',
+                '315.87',
+                '1149,17'
+            ]
+
+        return [None]*12
+    
+    # Callback para salvar os dados no dcc.Store sempre que qualquer input for alterado -------------------------
+    @app.callback(
+        Output('shared-data', 'data'),
+        [
+            Input('responsavel-relatorio-simples', 'value'),
+            Input('info-geral', 'value'),
+            Input('id-loteamento', 'value'),
+            Input('localizacao', 'value'),
+            Input('revisao', 'value'),
+            Input('vgv', 'value'),
+            Input('area-total', 'value'),
+            Input('perimetro', 'value'),
+            Input('area-lotes', 'value'),
+            Input('area-viario', 'value'),
+            Input('comprimento-viario', 'value'),
+            Input('area-construida', 'value'),
+            Input('area-quadra', 'value'),
+            Input('qtd-lotes', 'value'),
+            Input('dados-incc-antigo', 'value'),
+            Input('dados-incc-atual', 'value'),
+            Input('volume-corte', 'value'),
+            Input('volume-aterro', 'value'),
+            Input('volume-transporte', 'value'),
+            Input('fechamento-perimetral', 'value'),
+            Input('meio-fio', 'value'),
+            Input('rede-eletrica', 'value'),
+            Input('rede-agua', 'value'),
+            Input('rede-drenagem', 'value'),
+            Input('rede-esgoto', 'value'),
+            Input('pavimentacao', 'value'),
+            Input('supressao-vegetacao', 'value'),
+            Input('custo-terraplanagem', 'value'),
+            Input('edificacoes', 'value'),
+            Input('quadra-society', 'value'),
+        ],
+        State('shared-data', 'data')
+    )
+    def save_data(
+        responsavel_relatorio_simples, info_geral, id_loteamento, localizacao, revisao, vgv, area_total, perimetro,
+        area_lotes, area_viario, comprimento_viario, area_construida, area_quadra, qtd_lotes,
+        dados_incc_antigo, dados_incc_atual, volume_corte, volume_aterro,
+        volume_transporte, fechamento_perimetral, meio_fio, rede_eletrica,
+        rede_agua, rede_drenagem, rede_esgoto, pavimentacao,
+        supressao_vegetacao, custo_terraplanagem, edificacoes, quadra_society,
+        current_data
+    ):
+        if current_data is None:
+            current_data = {}
+        
+        current_data.update({
+            'responsavel_relatorio_simples': responsavel_relatorio_simples,
+            'info_geral': info_geral,
+            'id_loteamento': id_loteamento,
+            'localizacao': localizacao,
+            'revisao': revisao,
+            'vgv': convert_to_float(vgv),
+            'area_total': convert_to_float(area_total),
+            'perimetro': convert_to_float(perimetro),
+            'area_lotes': convert_to_float(area_lotes),
+            'area_viario': convert_to_float(area_viario),
+            'comprimento_viario': convert_to_float(comprimento_viario),
+            'area_construida': convert_to_float(area_construida),
+            'area_quadra': convert_to_float(area_quadra),
+            'qtd_lotes': convert_to_float(qtd_lotes),
+            'dados_incc_antigo': convert_to_float(dados_incc_antigo),
+            'dados_incc_atual': convert_to_float(dados_incc_atual),
+            'volume_corte': convert_to_float(volume_corte),
+            'volume_aterro': convert_to_float(volume_aterro),
+            'volume_transporte': convert_to_float(volume_transporte),
+            'fechamento_perimetral': convert_to_float(fechamento_perimetral),
+            'meio_fio': convert_to_float(meio_fio),
+            'rede_eletrica': convert_to_float(rede_eletrica),
+            'rede_agua': convert_to_float(rede_agua),
+            'rede_drenagem': convert_to_float(rede_drenagem),
+            'rede_esgoto': convert_to_float(rede_esgoto),
+            'pavimentacao': convert_to_float(pavimentacao),
+            'supressao_vegetacao': convert_to_float(supressao_vegetacao),
+            'custo_terraplanagem': convert_to_float(custo_terraplanagem),
+            'edificacoes': convert_to_float(edificacoes),
+            'quadra_society': convert_to_float(quadra_society),
+        })
+        return current_data
+
+    # Callback para carregar os dados do dcc.Store nos inputs quando a página é acessada -------------------------
+    @app.callback(
+        [
+            Output('responsavel-relatorio-simples', 'value'),
+            Output('info-geral', 'value'),
+            Output('id-loteamento', 'value'),
+            Output('localizacao', 'value'),
+            Output('revisao', 'value'),
+            Output('vgv', 'value'),
+            Output('area-total', 'value'),
+            Output('perimetro', 'value'),
+            Output('area-lotes', 'value'),
+            Output('area-viario', 'value'),
+            Output('comprimento-viario', 'value'),
+            Output('area-construida', 'value'),
+            Output('area-quadra', 'value'),
+            Output('qtd-lotes', 'value'),
+            Output('dados-incc-antigo', 'value'),
+            Output('dados-incc-atual', 'value'),
+            Output('volume-corte', 'value'),
+            Output('volume-aterro', 'value'),
+            Output('volume-transporte', 'value'),
+            Output('fechamento-perimetral', 'value'),
+            Output('meio-fio', 'value'),
+            Output('rede-eletrica', 'value'),
+            Output('rede-agua', 'value'),
+            Output('rede-drenagem', 'value'),
+            Output('rede-esgoto', 'value'),
+            Output('pavimentacao', 'value'),
+            Output('supressao-vegetacao', 'value'),
+            Output('custo-terraplanagem', 'value'),
+            Output('edificacoes', 'value'),
+            Output('quadra-society', 'value'),
+        ],
+        [
+            Input('url', 'pathname')  # Atualiza quando a URL muda
+        ],
+        [
+            State('shared-data', 'data') # Carrega os dados salvos no Store
+        ]
+    )
+    def load_data(pathname, data):
+        if pathname != '/orcamento-simples':
+            raise PreventUpdate  
+        if data is None:
+            return [None] * 30
+        return [
+            data.get('responsavel_relatorio_simples', None),
+            data.get('info_geral', None),
+            data.get('id_loteamento', None),
+            data.get('localizacao', None),
+            data.get('revisao', None),
+            convert_from_float(data.get('vgv', 0)),
+            convert_from_float(data.get('area_total', 0)),
+            convert_from_float(data.get('perimetro', 0)),
+            convert_from_float(data.get('area_lotes', 0)),
+            convert_from_float(data.get('area_viario', 0)),
+            convert_from_float(data.get('comprimento_viario', 0)),
+            convert_from_float(data.get('area_construida', 0)),
+            convert_from_float(data.get('area_quadra', 0)),
+            convert_from_float(data.get('qtd_lotes', 0)),
+            convert_from_float(data.get('dados_incc_antigo', 0)),
+            convert_from_float(data.get('dados_incc_atual', 0)),
+            convert_from_float(data.get('volume_corte', 0)),
+            convert_from_float(data.get('volume_aterro', 0)),
+            convert_from_float(data.get('volume_transporte', 0)),
+            convert_from_float(data.get('fechamento_perimetral', 0)),
+            convert_from_float(data.get('meio_fio', 0)),
+            convert_from_float(data.get('rede_eletrica', 0)),
+            convert_from_float(data.get('rede_agua', 0)),
+            convert_from_float(data.get('rede_drenagem', 0)),
+            convert_from_float(data.get('rede_esgoto', 0)),
+            convert_from_float(data.get('pavimentacao', 0)),
+            convert_from_float(data.get('supressao_vegetacao', 0)),
+            convert_from_float(data.get('custo_terraplanagem', 0)),
+            convert_from_float(data.get('edificacoes', 0)),
+            convert_from_float(data.get('quadra_society', 0)),
+        ]
+
+    # Lista dos campos do formulário que serão limpos
+    FIELDS_TO_CLEAR = [
+        "responsavel-relatorio-simples",
+        "info-geral",
+        "id-loteamento",
+        "localizacao",
+        "revisao",
+        "vgv",
+        "area-total",
+        "perimetro",
+        "area-lotes",
+        "area-viario",
+        "comprimento-viario",
+        "area-construida",
+        "area-quadra",
+        "qtd-lotes",
+        "dados-incc-antigo",
+        "dados-incc-atual",
+        "volume-corte",
+        "volume-aterro",
+        "volume-transporte",
+        "fechamento-perimetral",
+        "meio-fio",
+        "rede-eletrica",
+        "rede-agua",
+        "rede-drenagem",
+        "rede-esgoto",
+        "pavimentacao",
+        "supressao-vegetacao",
+        "custo-terraplanagem",
+        "edificacoes",
+        "quadra-society",
+    ]
+
+    # Callback para limpar os campos do formulário Orçamento Simples -------------------------
+    @app.callback(
+        [Output(field_id, "value") for field_id in FIELDS_TO_CLEAR],
+        Input("clear-button", "n_clicks")
+    )
+    def clear_form_fields(n_clicks):
+        if not n_clicks:
+            raise PreventUpdate
+
+        # Retorna None para cada campo da lista
+        return [None] * len(FIELDS_TO_CLEAR)
+
+
+
+    # Callback para gerar o relatório simples -------------------------
+    @app.callback(
+        Output('url', 'pathname'),
+        [Input('generate-report-button', 'n_clicks')],
+        [State('shared-data', 'data')]
+    )
+    def generate_simple_report(n_clicks, data):
+        if n_clicks is None or n_clicks == 0:
+            raise PreventUpdate
+        if data is None:
+            raise PreventUpdate
+
+        # Redireciona o usuário para a página de relatório
+        return '/relatorio-simples'
+
+    
+    # Callback para atualizar a tabela, os cards e gerar o gráfico de barras na página Relatório Simples -------------------------
+    @app.callback(
+        [
+            Output('results-table', 'data'),
+            Output('bar-chart', 'figure'),
+            Output('card-id-loteamento', 'children'),
+            Output('card-valor-total', 'children'),
+            Output('card-cc-fip', 'children'),
+            Output('card-cc-at', 'children'),
+            Output('card-cc-ap', 'children'),
+            Output('card-cc-vgv', 'children'),
+        ],
+        [Input('url', 'pathname')],
+        [State('shared-data', 'data')]
+    )
+    def update_results_table_and_graph(pathname, data):
+        if pathname != '/relatorio-simples':
+            raise PreventUpdate
+        if data is None:
+            return [], {}, "", "", "", "", ""
+
+        # DADOS URBANÍSTICOS 
+        perimetro = convert_to_float(data.get('perimetro', 0.0))
+        comprimento_viario = convert_to_float(data.get('comprimento_viario', 0.0))
+        area_viario = convert_to_float(data.get('area_viario', 0.0))
+        area_total = convert_to_float(data.get('area_total', 0.0))
+        area_lotes = convert_to_float(data.get('area_lotes', 0.0))
+        area_construida = convert_to_float(data.get('area_construida', 0.0))
+        area_quadra = convert_to_float(data.get('area_quadra', 0.0))
+        qtd_lotes = convert_to_float(data.get('qtd_lotes', 0.0))
+        dados_incc_antigo = convert_to_float(data.get('dados_incc_antigo', 0.0))
+        dados_incc_atual = convert_to_float(data.get('dados_incc_atual', 0.0))
+        id_loteamento = data.get('id_loteamento', '')
+        vgv = convert_to_float(data.get('vgv', 0.0))
+        # TERRAPLANAGEM 
+        volume_corte = convert_to_float(data.get('volume_corte', 0.0))
+        volume_aterro = convert_to_float(data.get('volume_aterro', 0.0))
+        volume_transporte = convert_to_float(data.get('volume_transporte', 0.0))
+        # CUSTOS UNITÁRIOS
+        fechamento_perimetral = convert_to_float(data.get('fechamento_perimetral', 0.0))
+        meio_fio = convert_to_float(data.get('meio_fio', 0.0))
+        rede_eletrica = convert_to_float(data.get('rede_eletrica', 0.0))
+        rede_agua = convert_to_float(data.get('rede_agua', 0.0))
+        rede_drenagem = convert_to_float(data.get('rede_drenagem', 0.0))
+        rede_esgoto = convert_to_float(data.get('rede_esgoto', 0.0))
+        pavimentacao = convert_to_float(data.get('pavimentacao', 0.0))
+        supressao_vegetacao = convert_to_float(data.get('supressao_vegetacao', 0.0))
+        custo_terraplanagem = convert_to_float(data.get('custo_terraplanagem', 0.0))
+        edificacoes = convert_to_float(data.get('edificacoes', 0.0))
+        quadra_society = convert_to_float(data.get('quadra_society', 0.0))
+
+        # Verificar se os dados do INCC são válidos
+        if not dados_incc_antigo or dados_incc_antigo == 0:
+            return [], {}, "", "Dados INCC Antigo não pode ser zero ou vazio.", "", "", ""
+        if not dados_incc_atual or dados_incc_atual == 0:
+            return [], {}, "", "Dados INCC Atual não pode ser zero ou vazio.", "", "", ""
+
+        # Cálculos para os valores totais 
+        v1 = fechamento_perimetral * perimetro
+        v2 = meio_fio * (comprimento_viario * 2)
+        v3 = rede_eletrica * comprimento_viario
+        v4 = rede_agua * (comprimento_viario * 2)
+        v5 = rede_drenagem * comprimento_viario  
+        v6 = rede_esgoto * comprimento_viario
+        v7 = pavimentacao * area_viario
+        v8 = supressao_vegetacao * area_total
+        v9 = custo_terraplanagem * (volume_corte + volume_aterro + volume_transporte)
+        v10 = edificacoes * area_construida
+        v11 = quadra_society * area_quadra
+
+        # Cálculos para valores corrigidos (VALOR TOTAL)
+        fator_correcao = dados_incc_atual / dados_incc_antigo
+        ct1 = v1 * fator_correcao
+        ct2 = v2 * fator_correcao
+        ct3 = v3 * fator_correcao
+        ct4 = v4 * fator_correcao
+        ct5 = v5 * fator_correcao  
+        ct6 = v6 * fator_correcao
+        ct7 = v7 * fator_correcao
+        ct8 = v8 * fator_correcao
+        ct9 = v9 * fator_correcao
+        ct10 = v10 * fator_correcao
+        ct11 = v11 * fator_correcao
+
+        # Dados da tabela
+        table_data = [
+            {"item": "Fechamento Perimetral", "custo_unitario": convert_from_float(fechamento_perimetral), "quantitativo": convert_from_float(v1), "valor_total_corrigido": convert_from_float(ct1)},
+            {"item": "Meio fio", "custo_unitario": convert_from_float(meio_fio), "quantitativo": convert_from_float(v2), "valor_total_corrigido": convert_from_float(ct2)},
+            {"item": "Rede de Distribuição Elétrica", "custo_unitario": convert_from_float(rede_eletrica), "quantitativo": convert_from_float(v3), "valor_total_corrigido": convert_from_float(ct3)},
+            {"item": "Rede de Abastecimento de Água", "custo_unitario": convert_from_float(rede_agua), "quantitativo": convert_from_float(v4), "valor_total_corrigido": convert_from_float(ct4)},
+            {"item": "Rede de Drenagem", "custo_unitario": convert_from_float(rede_drenagem), "quantitativo": convert_from_float(v5), "valor_total_corrigido": convert_from_float(ct5)},
+            {"item": "Rede de Coleta de Esgoto", "custo_unitario": convert_from_float(rede_esgoto), "quantitativo": convert_from_float(v6), "valor_total_corrigido": convert_from_float(ct6)},
+            {"item": "Pavimentação", "custo_unitario": convert_from_float(pavimentacao), "quantitativo": convert_from_float(v7), "valor_total_corrigido": convert_from_float(ct7)},
+            {"item": "Supressão de Vegetação", "custo_unitario": convert_from_float(supressao_vegetacao), "quantitativo": convert_from_float(v8), "valor_total_corrigido": convert_from_float(ct8)},
+            {"item": "Terraplenagem", "custo_unitario": convert_from_float(custo_terraplanagem), "quantitativo": convert_from_float(v9), "valor_total_corrigido": convert_from_float(ct9)},
+            {"item": "Edificações", "custo_unitario": convert_from_float(edificacoes), "quantitativo": convert_from_float(v10), "valor_total_corrigido": convert_from_float(ct10)},
+            {"item": "Quadra Society", "custo_unitario": convert_from_float(quadra_society), "quantitativo": convert_from_float(v11), "valor_total_corrigido": convert_from_float(ct11)},
+        ]
+
+        # Calcular subtotal (soma dos valores corrigidos sem o acréscimo)
+        subtotal = sum([ct1, ct2, ct3, ct4, ct5, ct6, ct7, ct8, ct9, ct10, ct11])
+
+        # Valor total do orçamento (com acréscimo de 20%)
+        valor_total_orcamento = subtotal / 0.80
+
+        # Atualiza os cards
+        card_id_loteamento = id_loteamento
+        card_valor_total = f"R$ {convert_from_float(valor_total_orcamento)}"
+        card_sub_total = f"R$ {convert_from_float(subtotal)}/m²"
+
+        # Cálculo do CC/FIP
+        cc_fip = valor_total_orcamento / qtd_lotes if qtd_lotes else 0.0
+        card_cc_fip = f"R$ {convert_from_float(cc_fip)}/m²"
+
+        # Calcular CC/AT (Custo de Construção por Área Total)
+        cc_at = valor_total_orcamento / area_total if area_total else 0.0
+        card_cc_at = f"R$ {convert_from_float(cc_at)}/m²"
+
+        # Calcular CC/AP (Custo de Construção por Área de Projeto)
+        cc_ap = valor_total_orcamento / area_lotes if area_lotes else 0.0
+        card_cc_ap = f"R$ {convert_from_float(cc_ap)}/m²"
+        
+        # Calcular CC/VGV (Custo de Construção por Valor Geral de Vendas)
+        if vgv and vgv != 0 and area_lotes and area_lotes != 0 and qtd_lotes and qtd_lotes != 0:
+            cc_vgv_value = valor_total_orcamento / (area_lotes * vgv * qtd_lotes)
+            card_cc_vgv = f"{convert_from_float(cc_vgv_value)}%"
+        else:
+            cc_vgv_value = 0.0
+            card_cc_vgv = "0,00"
+
+        # *************************** Gráfico ***************************
+        
+        # Itens e valores para o gráfico
+        itens = [item['item'] for item in table_data]
+        valores = [convert_to_float(item['valor_total_corrigido']) for item in table_data]
+
+        # Calcular o total e os percentuais
+        total_valores = sum(valores)
+        percentuais = [(valor / total_valores) * 100 if total_valores != 0 else 0 for valor in valores]
+
+        # Ordenar os dados do maior para o menor percentual
+        data_for_chart = sorted(zip(percentuais, itens, valores), reverse=True)
+        percentuais_ordenados, itens_ordenados, valores_ordenados = zip(*data_for_chart)
+
+        # Paleta de cores (tons de laranja fortes)
+        strong_orange_colors = ['#FFA726', '#FF9800', '#FB8C00', '#F57C00', '#EF6C00', '#E65100']
+
+        # Criar um colormap ajustado para tons mais fortes
+        cmap = LinearSegmentedColormap.from_list('strong_orange', strong_orange_colors)
+
+        # Normalizar os valores para mapear nas cores
+        max_valor = max(valores_ordenados)
+        min_valor = min(valores_ordenados)
+        valor_range = max_valor - min_valor if max_valor != min_valor else 1
+        norm_valores = [(valor - min_valor) / valor_range for valor in valores_ordenados]
+
+        # Mapear os valores normalizados para cores
+        cores_mapeadas = [cmap(norm) for norm in norm_valores]
+
+        # Converter as cores para formato hexadecimal
+        cores_hex = [
+            '#{:02x}{:02x}{:02x}'.format(
+                int(r * 255), int(g * 255), int(b * 255)
+            ) for r, g, b, _ in cores_mapeadas
+        ]
+
+        # Dados para o gráfico
+        fig = go.Figure(
+            data=[
+                go.Bar(
+                    x=percentuais_ordenados,      # Percentuais no eixo X
+                    y=itens_ordenados,            # Itens no eixo Y
+                    orientation='h',              # Orientação horizontal
+                    text=[f"{percentual:.2f}%" for percentual in percentuais_ordenados],  # Texto como percentual
+                    textposition='inside',        # Texto dentro das barras
+                    textfont=dict(
+                        family="Arial",
+                        size=14,
+                        color="white"
+                    ),
+                    marker=dict(
+                        color=cores_hex,          # Paleta de cores personalizada
+                        line=dict(width=1, color="orange"),  # Contorno laranja
+                    ),
+                    hovertemplate=(
+                    "<b>%{y}</b><br>"  # Nome do serviço
+                    "Percentual: %{x:.2f}%<br>"  # Percentual
+                    "Valor: R$ %{customdata[0]:,.2f}<extra></extra>"  # Valor absoluto formatado
+                ),
+                    customdata=[[valor] for valor in valores_ordenados],  # Adiciona os valores ao tooltip
+                )
+            ]
+        )
+                                                                               
+        # Atualizações no layout
+        fig.update_layout(
+            title=dict(
+                text="Participação Percentual dos Serviços",
+                font=dict(size=24, family="Montserrat", color="#FF8C00"),
+                x=0.5,  # Centralizado horizontalmente
+                xanchor="center",
+            ),
+            xaxis=dict(
+                title=dict(
+                    text="Percentual (%)",  
+                    font=dict(size=16, family="Arial")
+                ),
+                tickfont=dict(size=14, family="Arial"),
+                gridcolor="rgba(200,200,200,0.5)",
+                zeroline=False,
+            ),
+            yaxis=dict(
+                title=dict(
+                    text="Serviços",  
+                    font=dict(size=16, family="Arial")
+                ),
+                tickfont=dict(size=14, family="Arial"),
+                categoryorder="total ascending",
+            ),
+            paper_bgcolor="white",
+            plot_bgcolor="white",                  # Fundo branco
+            margin=dict(l=120, r=40, t=80, b=50),  # Margens ajustadas
+            height=600,                            # Altura do gráfico
+        )
+
+        # Exibir o gráfico atualizado
+        return table_data, fig, card_id_loteamento, card_valor_total, card_cc_fip, card_cc_at, card_cc_ap, card_cc_vgv
+
+
+
+    # Callback para exportar a tabela para Excel -----------------------------------------
+    @app.callback(
+        Output("download-dataframe-xlsx", "data"),
+        [Input("export-button", "n_clicks")],
+        [State("results-table", "data")],
+        prevent_initial_call=True,
+    )
+    def export_table_to_excel(n_clicks, table_data):
+        if n_clicks is None or not table_data:
+            raise PreventUpdate
+
+        # Converter os dados da tabela em um DataFrame
+        df = pd.DataFrame(table_data)
+
+        # Retornar o DataFrame para download em formato Excel
+        return dcc.send_data_frame(
+            df.to_excel, "relatorio_simples.xlsx", sheet_name="Relatório Simples", index=False
+        )
+
+
+    # Callback para gerar PDF -----------------------------------------
+    @app.callback(
+        Output('download-pdf', 'data'),
+        [Input('generate-pdf-button', 'n_clicks')],
+        [
+            State('results-table', 'data'),
+            State('card-id-loteamento', 'children'),
+            State('card-valor-total', 'children'),   
+            State('card-sub-total', 'children'),
+            State('card-cc-at', 'children'),
+            State('card-cc-ap', 'children'),
+            State('card-cc-vgv', 'children'),
+            State('shared-data', 'data'), 
+        ],
+        prevent_initial_call=True
+    )
+    def generate_pdf(n_clicks, table_data, id_loteamento, valor_total_orcamento, subtotal, cc_at, cc_ap, cc_vgv, input_data):
+        if n_clicks is None or not table_data:
+            raise PreventUpdate
+
+        try:
+            buffer = io.BytesIO()
+            pdf = canvas.Canvas(buffer, pagesize=landscape(letter))
+            pdf.setTitle("Orçamento Simplificado")
+
+            # Dimensões da página
+            pagina_largura, pagina_altura = landscape(letter)
+           
+           ### ===================== PÁGINA 1 ===================== 
+           
+            # 1) Preencher com cor de fundo
+            pdf.setFillColor(HexColor("#345F6C"))  # Define a cor de fundo
+            pdf.rect(0, 0, pagina_largura, pagina_altura, fill=1)  # Preenche toda a página
+
+            # 2) Inserir o título "Orçamento Paramétrico" centralizado acima da logo
+            pdf.setFillColor(HexColor("#FFFFFF"))  # Cor branca para o texto
+            pdf.setFont("Helvetica-Bold", 30)
+            titulo_capa = "Orçamento Paramétrico"
+            titulo_largura = pdf.stringWidth(titulo_capa, "Helvetica-Bold", 26)
+            pdf.drawString(
+                (pagina_largura - titulo_largura) / 2,  # Centralizar na página
+                pagina_altura - 120,  # Posicionamento vertical (ajustável)
+                titulo_capa
+            )
+
+            # 3) Inserir a logo centralizada (ajustando proporção corretamente)
+            try:
+                capa_logo = "assets/logoor2.png"
+                
+                # Definir um tamanho base sem distorção
+                max_width = 300  # Largura máxima permitida
+                max_height = 130  # Altura máxima permitida
+
+                # Obter dimensões originais da imagem
+                from PIL import Image
+                with Image.open(capa_logo) as img:
+                    original_width, original_height = img.size
+                    aspect_ratio = original_width / original_height  # Proporção original da imagem
+                
+                # Calcular novo tamanho mantendo a proporção
+                if original_width > max_width or original_height > max_height:
+                    if aspect_ratio > 1:  # Se for mais larga do que alta
+                        new_width = max_width
+                        new_height = max_width / aspect_ratio
+                    else:  # Se for mais alta do que larga
+                        new_height = max_height
+                        new_width = max_height * aspect_ratio
+                else:
+                    new_width, new_height = original_width, original_height  # Mantém tamanho original se for pequeno
+
+                # Posicionar no centro
+                x_center = (pagina_largura - new_width) / 2
+                y_center = pagina_altura - 350  # Ajuste fino da posição vertical
+
+                # Inserir a logo ajustada
+                pdf.drawImage(
+                    capa_logo,
+                    x_center,
+                    y_center,
+                    width=new_width,
+                    height=new_height,
+                    mask='auto'
+                )
+            except Exception as e:
+                print(f"Erro ao inserir a logo de capa: {e}")
+                
+            # 4) Inserir o texto do campo "info-geral" abaixo da logo (centralizado)
+            pdf.setFont("Helvetica", 16)
+            pdf.setFillColor(HexColor("#FFFFFF"))  # Cor branca para manter o padrão visual
+            
+            # Obter o texto do campo "info-geral"
+            info_geral_texto = input_data.get('info_geral', 'Nenhuma informação disponível')
+
+            # Definir a posição centralizada abaixo da logo
+            y_texto = y_center - 60  # Ajuste da posição abaixo da logo
+            text_width = pdf.stringWidth(info_geral_texto, "Helvetica", 16)
+
+            # Se o texto for maior que um certo limite, dividir em múltiplas linhas
+            max_line_width = 600  # Limite máximo de largura do texto
+            if text_width > max_line_width:
+                linhas = textwrap.wrap(info_geral_texto, width=70)  # Divide o texto em múltiplas linhas
+                
+                for linha in linhas:
+                    text_width = pdf.stringWidth(linha, "Helvetica", 16)
+                    pdf.drawString((pagina_largura - text_width) / 2, y_texto, linha)
+                    y_texto -= 20  # Pular linha
+            else:
+                pdf.drawString((pagina_largura - text_width) / 2, y_texto, info_geral_texto)
+
+            # 5) Inserir nome do responsável na parte inferior esquerda
+            pdf.setFont("Helvetica", 16)
+            pdf.setFillColor(HexColor("#FFFFFF"))  # Texto branco
+            responsavel_texto = f"Responsável: {input_data.get('responsavel_relatorio_simples', 'Não informado')}"
+            pdf.drawString(50, 50, responsavel_texto)  # Posiciona no canto inferior esquerdo
+
+            # 6) Inserir data na parte inferior direita da Página 1
+            pdf.setFont("Helvetica", 16)
+            pdf.setFillColor(HexColor("#FFFFFF"))  # Texto branco
+            
+            # Capturar data atual no formato DD/MM/AAAA
+            data_atual = datetime.datetime.now().strftime("%d/%m/%Y")
+            
+            # Definir a posição na parte inferior direita
+            data_text_width = pdf.stringWidth(data_atual, "Helvetica", 16)
+            pdf.drawString(pagina_largura - data_text_width - 50, 50, data_atual)  # Posição inferior direita
+
+            # 7) Finalizar a capa e seguir para a próxima página
+            pdf.showPage()
+
+                
+           ### ===================== PÁGINA 2 =====================
+            
+            y_position = pagina_altura - 50
+
+            # Inserir logo no canto superior direito
+            logo_path = 'assets/logoor.png'
+            try:
+                pdf.drawImage(
+                    logo_path,
+                    x=pagina_largura - 90,
+                    y=pagina_altura - 60,
+                    width=80,
+                    height=40,
+                    mask='auto'
+                )
+            except Exception as e:
+                print(f"Erro ao inserir a logo: {e}")
+
+            # ---------------------------------------------------------------------
+            # 1. Exibir título usando y_position
+            # ---------------------------------------------------------------------
+            pdf.setFont("Helvetica-Bold", 16)
+            titulo_texto = "Orçamento Simplificado"
+            titulo_largura = pdf.stringWidth(titulo_texto, "Helvetica-Bold", 16)
+            pdf.drawString(
+                (pagina_largura - titulo_largura) / 2,
+                y_position,
+                titulo_texto
+            )
+
+            # Ajustar a posição vertical para a próxima linha abaixo do título
+            y_position -= 30
+
+            # Exibição dos Resultados ---------------------------
+            
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(50, y_position, "Resultados:")
+            y_position -= 15
+
+            # Ajustar fonte para destacar apenas os rótulos em negrito
+            pdf.setFont("Helvetica-Bold", 7)
+            pdf.drawString(50, y_position, "Valor Total do Orçamento: ")
+            pdf.setFont("Helvetica", 7)
+            pdf.drawString(200, y_position, f"{valor_total_orcamento}")
+            y_position -= 12
+
+            pdf.setFont("Helvetica-Bold", 7)
+            pdf.drawString(50, y_position, "Subtotal - (80% do valor total): ")
+            pdf.setFont("Helvetica", 7)
+            pdf.drawString(200, y_position, f"{subtotal}")
+            y_position -= 12
+
+            pdf.setFont("Helvetica-Bold", 7)
+            pdf.drawString(50, y_position, "CC/AT: ")
+            pdf.setFont("Helvetica", 7)
+            pdf.drawString(200, y_position, f"{cc_at}")
+            y_position -= 12
+
+            pdf.setFont("Helvetica-Bold", 7)
+            pdf.drawString(50, y_position, "CC/AP: ")
+            pdf.setFont("Helvetica", 7)
+            pdf.drawString(200, y_position, f"{cc_ap}")
+            y_position -= 12
+
+            pdf.setFont("Helvetica-Bold", 7)
+            pdf.drawString(50, y_position, "CC/VGV: ")
+            pdf.setFont("Helvetica", 7)
+            pdf.drawString(200, y_position, f"{cc_vgv}")
+            y_position -= 20  # Espaço adicional
+
+            # 4. Seção "Dados do Orçamento Simplificado" -------------------------------------------
+           
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(50, y_position, "Dados do Orçamento Simplificado:")
+            y_position -= 15
+
+            pdf.setFont("Helvetica", 8)
+
+            # Definir a ordem e os labels dos inputs
+            input_keys = [
+                'info_geral', 
+                'id_loteamento', 'localizacao', 'revisao', 'vgv', 'area_total', 'perimetro',
+                'area_lotes', 'area_viario', 'comprimento_viario', 'area_construida', 'area_quadra',
+                'dados_incc_antigo', 'dados_incc_atual', 'volume_corte', 'volume_aterro',
+                'volume_transporte', 'fechamento_perimetral', 'meio_fio', 'rede_eletrica',
+                'rede_agua', 'rede_drenagem', 'rede_esgoto', 'pavimentacao',
+                'supressao_vegetacao', 'custo_terraplanagem', 'edificacoes', 'quadra_society'
+            ]
+            input_labels = {
+                'info_geral': 'Informações Gerais',
+                'id_loteamento': 'ID Condomínios Horizontais',
+                'localizacao': 'Localização',
+                'revisao': 'Revisão',
+                'vgv': 'VGV',
+                'area_total': 'Área Total do Terreno (m²)',
+                'perimetro': 'Perímetro do Terreno (m)',
+                'area_lotes': 'Área dos Lotes (m²)',
+                'area_viario': 'Área do Viário (m²)',
+                'comprimento_viario': 'Comprimento do Viário (m)',
+                'area_construida': 'Área Construída (m²)',
+                'area_quadra': 'Área da Quadra (m²)',
+                'dados_incc_antigo': 'Dados INCC Antigo',
+                'dados_incc_atual': 'Dados INCC Atual',
+                'volume_corte': 'Volume de Corte (m³)',
+                'volume_aterro': 'Volume de Aterro (m³)',
+                'volume_transporte': 'Volume de Transporte Interno (m³)',
+                'fechamento_perimetral': 'Fechamento Perimetral (cc/m)',
+                'meio_fio': 'Meio Fio (cc/m)',
+                'rede_eletrica': 'Rede Distribuição Elétrica (cc/m)',
+                'rede_agua': 'Rede Abastecimento de Água (cc/m)',
+                'rede_drenagem': 'Rede de Drenagem (cc/m)',
+                'rede_esgoto': 'Rede Coleta de Esgoto (cc/m)',
+                'pavimentacao': 'Pavimentação (cc/m²)',
+                'supressao_vegetacao': 'Supressão de Vegetação (cc/m²)',
+                'custo_terraplanagem': 'Terraplenagem (cc/m²)',
+                'edificacoes': 'Edificações (cc/m²)',
+                'quadra_society': 'Quadra Society (cc/m²)',
+            }
+
+            info_geral_value = input_data.get('info_geral', '')
+
+            # Exibir "Informações Gerais:" e o conteúdo de info_geral
+            pdf.setFont("Helvetica-Bold", 8)
+            pdf.drawString(50, y_position, "Informações Gerais:")
+            y_position -= 12
+
+            pdf.setFont("Helvetica", 7)
+            text_object = pdf.beginText(50, y_position)
+            wrapped_lines = textwrap.wrap(info_geral_value, width=180)
+            for wrapped_line in wrapped_lines:
+                text_object.textLine(wrapped_line)
+                y_position -= 12
+                if y_position < 50:
+                    pdf.drawText(text_object)
+                    pdf.showPage()
+                    y_position = pagina_altura - 50
+                    pdf.setFont("Helvetica", 7)
+                    text_object = pdf.beginText(50, y_position)
+            pdf.drawText(text_object)
+            y_position -= 10
+
+            # Montar lista (label, valor)
+            input_items = []
+            for key in input_keys[1:]:  # Pulando 'info_geral' pois já foi exibido separadamente
+                label = input_labels.get(key, key)
+                value = input_data.get(key, '')
+                if isinstance(value, float):
+                    value_str = convert_from_float(value)
+                else:
+                    value_str = str(value)
+                input_items.append((label, value_str))
+
+            # Exibir dados organizados em colunas com espaçamento maior para evitar sobreposição
+            x_positions = [50, 280, 550]  
+            spacing_between_label_and_value = 140  # distância entre label e valor
+
+            for i in range(0, len(input_items), 3):
+                y_position -= 15
+                if y_position < 50:
+                    pdf.showPage()
+                    y_position = pagina_altura - 50
+                    pdf.setFont("Helvetica", 7)
+
+                for col in range(3):
+                    if i + col < len(input_items):
+                        label, value_str = input_items[i + col]
+                        pdf.setFont("Helvetica-Bold", 7)  # Rótulo em negrito
+                        pdf.drawString(x_positions[col], y_position, f"{label}:")
+                        pdf.setFont("Helvetica", 7)  # Valor em fonte normal
+                        pdf.drawString(x_positions[col] + spacing_between_label_and_value, y_position, f"{value_str}")
+
+            # Espaço antes da tabela
+            y_position -= 20
+            if y_position < 100:
+                pdf.showPage()
+                y_position = pagina_altura - 50
+                pdf.setFont("Helvetica", 8)
+
+            # 5. Seção "Resultados" --------------------------------------------------
+
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(50, y_position, "Resultados:")
+            y_position -= 20  # Maior espaçamento antes da tabela
+
+            # Cabeçalhos da tabela com negrito
+            pdf.setFont("Helvetica-Bold", 8)
+            headers = ["Item", "Valor Total Corrigido"]
+            x_positions_table = [50, 200]  # Ajustando a posição das colunas
+
+            for i, header in enumerate(headers):
+                pdf.drawString(x_positions_table[i], y_position, header)
+            y_position -= 15  # Ajuste de espaçamento abaixo do cabeçalho
+
+            # Dados da tabela
+            pdf.setFont("Helvetica", 8)
+            spacing_between_label_and_value = 135  # Distância entre label e valor ajustada
+
+            for item in table_data:
+                item_name = item.get('item', '')
+                valor_total_corrigido = convert_to_float(item.get('valor_total_corrigido', 0.0))
+
+                valor_total_corrigido_str = f"R$ {convert_from_float(valor_total_corrigido)}"
+
+                # Rótulo do item em negrito
+                pdf.setFont("Helvetica-Bold", 7)
+                pdf.drawString(x_positions_table[0], y_position, str(item_name))
+
+                # Valor total corrigido em fonte normal
+                pdf.setFont("Helvetica", 7)
+                pdf.drawString(x_positions_table[1], y_position, valor_total_corrigido_str)
+                
+                y_position -= 12  # Ajuste de espaçamento entre as linhas
+
+                if y_position < 50:  # Se chegar ao fim da página, cria uma nova página
+                    pdf.showPage()
+                    y_position = pagina_altura - 50
+                    pdf.setFont("Helvetica", 8)
+
+
+            ### ===================== PÁGINA 3 =====================
+            
+            pdf.showPage()
+            y_position = pagina_altura - 50
+
+            try:
+                pdf.drawImage(
+                    logo_path,
+                    x=pagina_largura - 90,
+                    y=pagina_altura - 60,
+                    width=80,
+                    height=40,
+                    mask='auto'
+                )
+            except Exception as e:
+                print(f"Erro ao inserir a logo: {e}")
+
+            pdf.setFont("Helvetica-Bold", 16)
+            titulo_grafico = "Gráfico"
+            titulo_largura = pdf.stringWidth(titulo_grafico, "Helvetica-Bold", 16)
+            pdf.drawString((pagina_largura - titulo_largura) / 2, y_position, titulo_grafico)
+            y_position -= 30
+
+            # Construir gráfico Matplotlib
+            fig, ax = plt.subplots(figsize=(14, 6))
+
+            itens = [item['item'] for item in table_data]
+            valores = [convert_to_float(item['valor_total_corrigido']) for item in table_data]
+            total_valores = sum(valores)
+            percentuais = [(v / total_valores) * 100 if total_valores != 0 else 0 for v in valores]
+
+            data_for_chart = sorted(zip(percentuais, itens, valores), reverse=True)
+            percentuais_ordenados, itens_ordenados, valores_ordenados = zip(*data_for_chart)
+
+            strong_orange_colors = ['#FFA726', '#FF9800', '#FB8C00', '#F57C00', '#EF6C00', '#E65100']
+            cmap = LinearSegmentedColormap.from_list('strong_orange', strong_orange_colors)
+            max_valor = max(valores_ordenados)
+            min_valor = min(valores_ordenados)
+            valor_range = max_valor - min_valor if max_valor != min_valor else 1
+            norm_valores = [(val - min_valor) / valor_range for val in valores_ordenados]
+            cores_mapeadas = [cmap(nval) for nval in norm_valores]
+            cores_hex = [
+                '#{:02x}{:02x}{:02x}'.format(
+                    int(r * 255), int(g * 255), int(b * 255)
+                ) for r, g, b, _ in cores_mapeadas
+            ]
+
+            bars = ax.barh(itens_ordenados, percentuais_ordenados, color=cores_hex)
+            for bar, percentual in zip(bars, percentuais_ordenados):
+                width = bar.get_width()
+                ax.annotate(
+                    f'{percentual:.2f}%',
+                    xy=(width, bar.get_y() + bar.get_height() / 2),
+                    xytext=(5, 0),
+                    textcoords="offset points",
+                    ha='left',
+                    va='center',
+                    fontsize=10,
+                    color='black'
+                )
+            ax.invert_yaxis()
+            ax.set_title('Participação Percentual dos Serviços', fontsize=14, weight='bold')
+            ax.set_xlabel('Percentual (%)', fontsize=12)
+            ax.set_ylabel('Serviços', fontsize=12)
+            ax.tick_params(axis='x', labelsize=10)
+            ax.tick_params(axis='y', labelsize=10)
+            ax.grid(True, axis='x', linestyle='--', alpha=0.7)
+            plt.tight_layout()
+
+            # Salvar gráfico temporário
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
+                plt.savefig(tmpfile.name, format='png', bbox_inches='tight')
+                plt.close(fig)
+
+                # Inserir o gráfico no PDF
+                grafico_x = 50
+                grafico_y = (pagina_altura - 400) / 2
+                grafico_width = 700
+                grafico_height = 400
+
+                pdf.drawImage(
+                    tmpfile.name,
+                    x=grafico_x,
+                    y=grafico_y,
+                    width=grafico_width,
+                    height=grafico_height,
+                    mask='auto'
+                )
+
+            # Finalizar PDF
+            pdf.save()
+            buffer.seek(0)
+
+            return dcc.send_bytes(buffer.getvalue(), filename="relatorio_simplificado.pdf")
+
+        except Exception as e:
+            print(f"Erro ao gerar o PDF: {e}")
+            raise PreventUpdate

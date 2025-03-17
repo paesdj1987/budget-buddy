@@ -1,0 +1,8 @@
+services:
+  app:
+    image: 'dash-or:latest'
+    build:
+      context: .
+    container_name: dash-or
+    ports:
+      - 8051:8051

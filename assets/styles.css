@@ -1,0 +1,268 @@
+/* ==================================================
+   ESTILOS GLOBAIS
+   ================================================== */
+
+   body {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 300;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+
+/* Reduzindo levemente cada nível de título e texto */
+h1 { font-size: 1.6rem; } /* Antes 1.8rem */
+h2 { font-size: 1.4rem; } /* Antes 1.6rem */
+h3 { font-size: 1.2rem; } /* Antes 1.4rem */
+h4 { font-size: 1.0rem; } /* Antes 1.2rem */
+h5, h6, p, a, label, input, button, table {
+    font-size: 0.85rem; /* Antes 0.9rem */
+}
+
+/* =============================
+   SIDEBAR MODERNO + ÍCONES
+   ============================= */
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 220px;
+    background: rgba(44, 62, 80, 0.9); /* Tom escuro semi-transparente */
+    backdrop-filter: blur(8px);        /* Glassmorphism - efeito vidro fosco */
+    box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+    z-index: 1000;
+    overflow-y: auto;
+    transition: all 0.3s ease-in-out;
+}
+
+/* Título do Sidebar */
+.sidebar h2 {
+    color: #ECF0F1;      /* Cor clara para contraste */
+    font-size: 1.3rem;  /* Reduzido de 1.5rem */
+    font-weight: bold;
+    margin-bottom: 20px;
+    font-family: 'Montserrat', sans-serif;
+    text-align: center;
+}
+
+/* Separador */
+.sidebar hr {
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    margin-bottom: 20px;
+}
+
+/* Estilo dos Links no Sidebar */
+.sidebar a {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+    color: #BDC3C7;
+    font-size: 0.88rem; /* Reduzido de 0.95rem */
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    transition: background-color 0.3s, color 0.3s, transform 0.2s;
+}
+
+/* Efeito de Hover no Sidebar */
+.sidebar a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+    transform: translateX(5px);
+    box-shadow: 0px 0px 5px rgba(255, 255, 255, 0.2);
+}
+
+/* Ícones mudam de cor no hover */
+.sidebar a:hover::before {
+    color: #FFA80B;
+}
+
+/* Link Ativo */
+.sidebar a.active,
+.sidebar a:focus {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF !important;
+    outline: none;
+    transform: translateX(5px);
+}
+
+/* Responsividade do Sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 180px;
+    }
+}
+@media (max-width: 576px) {
+    .sidebar {
+        width: 160px;
+    }
+}
+
+/* ==================================================
+   LAYOUT PRINCIPAL
+   ================================================== */
+
+.main-content {
+    margin-left: 220px;
+    padding: 20px;
+}
+
+.content-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f5f5f5;
+    text-align: center;
+    padding: 20px;
+}
+
+/* ==================================================
+   RESPONSIVIDADE
+   ================================================== */
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 200px;
+    }
+    .main-content {
+        margin-left: 210px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 180px;
+    }
+    .main-content {
+        margin-left: 190px;
+    }
+}
+
+@media (max-width: 576px) {
+    .sidebar {
+        width: 160px;
+    }
+    .main-content {
+        margin-left: 170px;
+    }
+}
+
+/* ==================================================
+   ESTILOS DE IMAGENS E LOGOS
+   ================================================== */
+
+.logo-container {
+    margin-bottom: 10px;
+    margin-top: -25px;
+    text-align: center;
+}
+
+.logo-wrapper img:first-child {
+    max-height: 75px;  /* Diminuído de 90px */
+    width: auto;
+    margin-right: 15px;
+}
+
+.logo-wrapper img:last-child {
+    max-height: 75px;  /* Diminuído de 90px */
+    width: auto;
+    margin-left: 18px;
+}
+
+.pipe {
+    width: 3px;
+    height: 5rem;
+    background-color: #003d50;
+    margin: 0 15px;
+    position: relative;
+    top: -15px;
+    display: inline-block;
+}
+
+.image-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 90px;
+    width: 100%;
+}
+
+.image-container img {
+    width: 100%;
+    height: auto;
+    max-height: 50vh;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* ==================================================
+   BOTÕES E LINKS
+   ================================================== */
+
+/* Botões abaixo da imagem - agora com efeito similar ao sidebar */
+.buttons-below-image {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+    transform: translateY(-50px);
+    transition: transform 0.8s ease;
+}
+
+.buttons-below-image .btn {
+    background-color: #3c5f6e;
+    color: #ffffff;
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem; /* Ajuste sutil */
+    transition: background-color 0.3s, color 0.3s, transform 0.2s, box-shadow 0.2s;
+    min-width: 90px;
+}
+
+/* Efeito de Hover semelhante ao sidebar */
+.buttons-below-image .btn:hover {
+    background-color: #2b4a5a;
+    transform: translateX(5px);
+    box-shadow: 0px 0px 5px rgba(255, 255, 255, 0.2);
+}
+
+/* Botão de Exportar para Excel */
+#export-button, #export-button-completo {
+    padding: 7px 14px;
+    font-size: 0.8rem; /* Ajuste sutil */
+}
+
+/* ==================================================
+   INPUTS E FORMULÁRIOS
+   ================================================== */
+
+input[type="text"], input[type="number"] {
+    width: 80%;
+}
+
+.main-content .form-label {
+    font-size: 0.85rem; /* Antes 0.9rem */
+}
+
+.main-content .form-control::placeholder {
+    font-size: 0.75rem; /* Antes 0.8rem */
+}
+
+/* ==================================================
+   FOOTER
+   ================================================== */
+
+.footer {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    font-size: 0.8rem; /* Antes 0.9rem */
+    color: #3c5f6e;
+}
