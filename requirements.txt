@@ -11,6 +11,6 @@ reportlab
 openpyxl
 dash-iconify
 pillow
-
-# pip install -r requirements.txt
+kaleido
+plotly
 

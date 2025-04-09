@@ -4,21 +4,34 @@ import dash_bootstrap_components as dbc
 # Layout da página Manual do Usuário
 layout = html.Div(
     className="main-content",
-    style={"font-family": "'Montserrat', sans-serif"},  # Aplicando Montserrat
+    style={
+        "font-family": "'Montserrat', sans-serif",
+        "position": "relative"  
+    },
     children=[
+        # Imagem logoor.png 
+        html.Img(
+            src="assets/logoor.png",
+            style={
+                "position": "absolute",
+                "top": "20px",
+                "right": "20px",
+                "width": "80px"  
+            }
+        ),
         # Espaçamento superior
         html.Div(style={"padding-top": "40px"}),
 
         # Título com a cor #345F6C
         html.H3(
-            "Manual do Usuário",
+            "📘 Manual do Usuário",
             style={
                 "margin-bottom": "30px",
-                "font-size": "2.5rem",
+                "font-size": "2rem",
                 "text-align": "center",
                 "font-weight": "bold",
-                "color": "#345F6C",  # Cor do título ajustada conforme solicitado
-                "font-family": "'Montserrat', sans-serif",  # Aplicando Montserrat
+                "color": "#345F6C",  
+                "font-family": "'Montserrat', sans-serif",
             }
         ),
 
@@ -37,9 +50,9 @@ layout = html.Div(
                                         "margin-top": "20px",
                                         "margin-bottom": "15px",
                                         "font-weight": "bold",
-                                        "color": "#345F6C",  # Mantendo a cor do título
+                                        "color": "#345F6C",
                                         "text-align": "center",
-                                        "font-family": "'Montserrat', sans-serif",  # Aplicando Montserrat
+                                        "font-family": "'Montserrat', sans-serif",
                                     }
                                 ),
 
@@ -87,7 +100,7 @@ layout = html.Div(
                                                 "color": "#555",
                                                 "list-style-type": "none",
                                                 "padding-left": "0",
-                                                "font-family": "'Montserrat', sans-serif",  # Aplicando Montserrat
+                                                "font-family": "'Montserrat', sans-serif",
                                             }
                                         ),
                                     ],
@@ -112,12 +125,12 @@ layout = html.Div(
                                                 "font-weight": "bold",
                                                 "padding": "12px 25px",
                                                 "color": "#fff",
-                                                "background-color": "#e74c3c",  # Vermelho para o botão
+                                                "background-color": "#e74c3c",
                                                 "border-radius": "5px",
                                                 "text-decoration": "none",
                                                 "margin-top": "30px",
                                                 "box-shadow": "0px 4px 6px rgba(0, 0, 0, 0.1)",
-                                                "font-family": "'Montserrat', sans-serif",  # Aplicando Montserrat
+                                                "font-family": "'Montserrat', sans-serif",
                                             },
                                             className="button-red",
                                         )

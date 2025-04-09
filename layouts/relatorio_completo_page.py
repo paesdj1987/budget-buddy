@@ -17,7 +17,7 @@ pyramid_chart_figure = go.Figure(
         title=dict(
             text="Participação Percentual dos Serviços",
             font=dict(size=26, family="Montserrat", color="#FF8C00"),
-            x=0.5,  # Centraliza horizontalmente
+            x=0.5,
             xanchor="center",
         ),
         xaxis=dict(
@@ -26,8 +26,8 @@ pyramid_chart_figure = go.Figure(
                 font=dict(size=16, family="Arial")
             ),
             tickfont=dict(size=14, family="Arial"),
-            gridcolor="rgba(200,200,200,0.5)",  # Linhas de grade suaves
-            zeroline=False,  # Remove linha do zero
+            gridcolor="rgba(200,200,200,0.5)",
+            zeroline=False,
         ),
         yaxis=dict(
             title=dict(
@@ -35,11 +35,11 @@ pyramid_chart_figure = go.Figure(
                 font=dict(size=16, family="Arial")
             ),
             tickfont=dict(size=14, family="Arial"),
-            categoryorder="total ascending",  # Ordena do maior para o menor
+            categoryorder="total ascending",
         ),
-        paper_bgcolor="white",  # Fundo branco
-        plot_bgcolor="white",  # Fundo do gráfico branco
-        margin=dict(l=120, r=40, t=80, b=50),  # Margens ajustadas
+        paper_bgcolor="white",
+        plot_bgcolor="white",
+        margin=dict(l=120, r=40, t=80, b=50),
         annotations=[
             dict(
                 text="Sem dados para exibir",
@@ -52,82 +52,143 @@ pyramid_chart_figure = go.Figure(
                 align="center",
             )
         ],
-        height=600,  # Altura padrão do gráfico
+        height=600,
     )
 )
 
+# Definir largura dos cards
+card_width = "230px"
+
+# Estilo moderno para os cards azulado (exceto o CC/VGV)
+modern_card_style_blue = {
+    "border": "none",
+    "borderRadius": "10px",
+    "background": "linear-gradient(135deg, #5DADE2, #2471A3)",
+    "boxShadow": "0 4px 8px rgba(0, 0, 0, 0.2)",
+    "minHeight": "20px",
+    "padding": "6px",
+    "marginBottom": "10px",
+    "width": card_width,
+}
+
+# Estilo moderno para o card CC/VGV (verde)
+modern_card_style_green = {
+    "border": "none",
+    "borderRadius": "10px",
+    "background": "linear-gradient(135deg, #2ecc71, #27ae60)",
+    "boxShadow": "0 4px 8px rgba(0, 0, 0, 0.2)",
+    "minHeight": "20px",
+    "padding": "6px",
+    "marginBottom": "10px",
+    "width": card_width,
+}
+
+# Estilos modernos para os botões de exportação (replicados do relatorio_simples_page)
+excel_button_style = {
+    'margin-bottom': '10px',
+    'margin-left': '15px',
+    'background': 'linear-gradient(90deg, #28a745, #66bb6a)',
+    'border': 'none',
+    'color': 'white',
+    'height': '40px',
+    'width': 'auto',
+    'text-align': 'center',
+    'display': 'flex',
+    'align-items': 'center',
+    'justify-content': 'center',
+    'font-family': 'Montserrat, sans-serif',
+    'font-size': '14px',
+    'borderRadius': '8px',
+    'boxShadow': '0 2px 4px rgba(0, 0, 0, 0.1)',
+    'transition': 'background 0.3s ease'
+}
+
+pdf_button_style = {
+    'margin-bottom': '10px',
+    'margin-left': '1px',
+    'background': 'linear-gradient(90deg, #d9534f, #e57373)',
+    'border': 'none',
+    'color': 'white',
+    'height': '40px',
+    'width': 'auto',
+    'text-align': 'center',
+    'display': 'flex',
+    'align-items': 'center',
+    'justify-content': 'center',
+    'font-family': 'Montserrat, sans-serif',
+    'font-size': '14px',
+    'borderRadius': '8px',
+    'boxShadow': '0 2px 4px rgba(0, 0, 0, 0.1)',
+    'transition': 'background 0.3s ease'
+}
 
 layout = html.Div(
     className="main-content",
+    style={
+        "font-family": "'Montserrat', sans-serif",
+        "position": "relative"  
+    },
     children=[
+
+        # Imagem logoor.png 
+        html.Img(
+            src="assets/logoor.png",
+            style={
+                "position": "absolute",
+                "top": "20px",
+                "right": "20px",
+                "width": "80px"  
+            }
+        ),
+
         dbc.Container(
             fluid=True,
             children=[
+
+                # Espaçamento superior geral da página
+                html.Div(style={"padding-top": "40px"}),
+
                 # Título da página
                 html.H3(
-                    "Relatório Completo",
+                    "📑 Relatório Completo",
                     style={
                         "margin": "10px 0 20px 0",
-                        "font-size": "2.5rem",
+                        "font-size": "2rem",
                         "color": "#345F6C",
                         "text-align": "center",
                         "font-weight": "bold"
                     }
                 ),
 
-                # Linha para os botões de exportação
+                # Linha para os botões de exportação com margem superior extra
                 dbc.Row(
                     [
-                        # Botão de exportação para Excel
                         dbc.Col(
                             dbc.Button(
-                                "Exportar para Excel",
+                                [
+                                    html.I(className="fas fa-file-excel", style={"marginRight": "8px"}),
+                                    "Exportar para Excel"
+                                ],
                                 id="export-button-completo",
-                                color="success",  # Cor verde
-                                style={
-                                    'margin-bottom': '10px',
-                                    'margin-left': '15px',
-                                    'background-color': '#28a745',  # Cor verde personalizada
-                                    'border-color': '#28a745',
-                                    'color': 'white',
-                                    'height': '36px',  # Ajuste de altura para igualar ao botão de exportar
-                                    'width': 'auto',
-                                    'text-align': 'center',  # Centralizar o texto no botão
-                                    'display': 'flex',
-                                    'align-items': 'center',
-                                    'justify-content': 'center',
-                                    'font-family': 'Montserrat',  # Alterar a fonte para Montserrat
-                                    'font-size': '16px',  # Tamanho da fonte
-                                }
+                                style=excel_button_style,
+                                n_clicks=0
                             ),
                             width="auto"
                         ),
-
-                        # Botão de gerar PDF
                         dbc.Col(
                             dbc.Button(
-                                "Gerar PDF",
+                                [
+                                    html.I(className="fas fa-file-pdf", style={"marginRight": "8px"}),
+                                    "Gerar PDF"
+                                ],
                                 id="generate-pdf-button-completo",
-                                color="danger",  # Cor vermelha
-                                style={
-                                    'margin-bottom': '10px',
-                                    'margin-left': '1px',
-                                    'background-color': '#d9534f',  # Cor vermelha personalizada
-                                    'border-color': '#d9534f',
-                                    'color': 'white',
-                                    'height': '36px',  # Ajuste de altura para igualar ao botão de exportar
-                                    'width': 'auto',
-                                    'text-align': 'center',  # Centralizar o texto no botão
-                                    'display': 'flex',
-                                    'align-items': 'center',
-                                    'justify-content': 'center',
-                                    'font-family': 'Montserrat',  # Alterar a fonte para Montserrat
-                                    'font-size': '16px',  # Tamanho da fonte
-                                }
+                                style=pdf_button_style,
+                                n_clicks=0
                             ),
                             width="auto"
                         ),
                     ],
+                    style={"marginTop": "50px"},
                     justify="start",
                 ),
 
@@ -177,35 +238,35 @@ layout = html.Div(
                                     'borderRadius': '15px',
                                 },
                                 style_header={
-                                    'backgroundImage': 'linear-gradient(to right, #346F7A, #345F6C, #2D5260)',  # Gradiente de azul
-                                    'color': '#FFFFFF',  # Texto branco
+                                    'backgroundImage': 'linear-gradient(to right, #346F7A, #345F6C, #2D5260)',
+                                    'color': '#FFFFFF',
                                     'fontWeight': 'bold',
                                     'fontSize': '15px',
                                     'textAlign': 'left',
-                                    'border': '1px solid #345F6C',  # Borda azul escuro
-                                    'lineHeight': '24px',  # Aumenta a altura das células do cabeçalho
+                                    'border': '1px solid #345F6C',
+                                    'lineHeight': '24px',
                                 },
                                 style_cell={
-                                    'backgroundColor': '#FFFFFF',  # Fundo branco nas células
-                                    'color': '#000',  # Texto preto para legibilidade
+                                    'backgroundColor': '#FFFFFF',
+                                    'color': '#000',
                                     'padding': '12px',
                                     'fontSize': '14px',
                                     'textAlign': 'left',
-                                    'border': '1px solid #345F6C',  # Borda azul escuro
-                                    'lineHeight': '24px',  # Aumenta a altura das células
+                                    'border': '1px solid #345F6C',
+                                    'lineHeight': '24px',
                                 },
                                 style_data={
-                                    'backgroundColor': '#FFFFFF',  # Fundo branco nas células de dados
-                                    'color': '#000',  # Texto preto
-                                    'border': '1px solid #345F6C',  # Borda azul escuro
-                                    'lineHeight': '24px',  # Aumenta a altura das células do dados
+                                    'backgroundColor': '#FFFFFF',
+                                    'color': '#000',
+                                    'border': '1px solid #345F6C',
+                                    'lineHeight': '24px',
                                 },
                                 style_data_conditional=[
                                     {
                                         'if': {'state': 'active'},
-                                        'backgroundColor': '#C6E7F1',  # Azul mais claro quando ativo
+                                        'backgroundColor': '#C6E7F1',
                                         'color': '#000',
-                                        'border': '1px solid #345F6C',  # Borda azul escuro
+                                        'border': '1px solid #345F6C',
                                     },
                                 ],
                             ),
@@ -218,215 +279,120 @@ layout = html.Div(
                             [
                                 dbc.Card(
                                     dbc.CardBody([
-                                        html.H4(
+                                        html.H5(
                                             "ID Cond. Horizontais",
-                                            className="card-text",
-                                            style={
-                                                'fontSize': '16px',
-                                                'color': '#000',
-                                                'fontWeight': 'bold',
-                                                'fontFamily': 'Montserrat',
-                                                'margin-bottom': '5px'  # Reduziu espaço inferior
+                                            className="card-title",
+                                            style={"fontWeight": "600", "color": "white", "marginBottom": "0.5rem", "fontSize": "14px"                                               
                                             }
                                         ),
-                                        html.P(
+                                        html.H2(
                                             id="card-id-loteamento-completo",
-                                            className="card-title",
+                                            #children="Sem informação",
                                             style={
-                                                'fontSize': '14px',
-                                                'color': '#000',
-                                                'margin': '0'  # Remove margens padrão do <p>
+                                                "fontWeight": "700", "color": "white", "margin": "0", "fontSize": "16px"         
                                             }
                                         ),
-                                    ]),
-                                    style={
-                                        'borderRadius': '10px',
-                                        'backgroundColor': '#B0E0E6',   # Cor de fundo (alterável)
-                                        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
-                                        'minHeight': '20px',           # Reduz a altura mínima
-                                        'padding': '6px',             # Ajusta preenchimento interno
-                                        'margin-bottom': '10px',      # Espaçamento entre cards
-                                        'width': '230px',
-                                    }
+                                    ], style={"textAlign": "center", "padding": "1rem"}),
+                                    style=modern_card_style_blue
                                 ),
                                 dbc.Card(
                                     dbc.CardBody([
-                                        html.H4(
+                                        html.H5(
                                             "Valor Total do Orçamento",
-                                            className="card-text",
-                                            style={
-                                                'fontSize': '16px',
-                                                'color': '#000',
-                                                'fontWeight': 'bold',
-                                                'fontFamily': 'Montserrat',
-                                                'margin-bottom': '5px'
+                                            className="card-title",
+                                            style={"fontWeight": "600", "color": "white", "marginBottom": "0.5rem", "fontSize": "14px"
                                             }
                                         ),
-                                        html.P(
+                                        html.H2(
                                             id="card-valor-total-completo",
-                                            className="card-title",
                                             style={
-                                                'fontSize': '14px',
-                                                'color': '#000',
-                                                'margin': '0'
+                                                "fontWeight": "700", "color": "white", "margin": "0", "fontSize": "16px"                                         
                                             }
                                         ),
-                                    ]),
-                                    style={
-                                        'borderRadius': '10px',
-                                        'backgroundColor': '#B0E0E6',
-                                        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
-                                        'minHeight': '20px',
-                                        'padding': '6px',
-                                        'margin-bottom': '10px',
-                                        'width': '230px',
-                                    }
+                                    ], style={"textAlign": "center", "padding": "1rem"}),
+                                    style=modern_card_style_blue
                                 ),
                                 dbc.Card(
                                     dbc.CardBody([
-                                        html.H4(
-                                            "Subtotal",
-                                            className="card-text",
-                                            style={
-                                                'fontSize': '16px',
-                                                'color': '#000',
-                                                'fontWeight': 'bold',
-                                                'fontFamily': 'Montserrat',
-                                                'margin-bottom': '5px'
-                                            }
-                                        ),
-                                        html.P(
-                                            id="card-sub-total-completo",
+                                        html.H5(
+                                            "CC/FIP",
                                             className="card-title",
                                             style={
-                                                'fontSize': '14px',
-                                                'color': '#000',
-                                                'margin': '0'
+                                                "fontWeight": "600", "color": "white", "marginBottom": "0.5rem", "fontSize": "14px"                                            
                                             }
                                         ),
-                                    ]),
-                                    style={
-                                        'borderRadius': '10px',
-                                        'backgroundColor': '#B0E0E6',
-                                        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
-                                        'minHeight': '20px',
-                                        'padding': '6px',
-                                        'margin-bottom': '10px',
-                                        'width': '230px',
-                                    }
+                                        html.H2(
+                                            id="card-cc-fip-completo",
+                                            style={
+                                                "fontWeight": "700", "color": "white", "margin": "0", "fontSize": "16px"                                             
+                                            }
+                                        ),
+                                    ], style={"textAlign": "center", "padding": "1rem"}),
+                                    style=modern_card_style_blue
                                 ),
                                 dbc.Card(
                                     dbc.CardBody([
-                                        html.H4(
+                                        html.H5(
                                             "CC/AT",
-                                            className="card-text",
-                                            style={
-                                                'fontSize': '16px',
-                                                'color': '#000',
-                                                'fontWeight': 'bold',
-                                                'fontFamily': 'Montserrat',
-                                                'margin-bottom': '5px'
+                                            className="card-title",
+                                            style={"fontWeight": "600",  "color": "white", "marginBottom": "0.5rem", "fontSize": "14px"                                                                           
                                             }
                                         ),
-                                        html.P(
+                                        html.H2(
                                             id="card-cc-at-completo",
-                                            className="card-title",
                                             style={
-                                                'fontSize': '14px',
-                                                'color': '#000',
-                                                'margin': '0'
+                                                "fontWeight": "700", "color": "white", "margin": "0", "fontSize": "16px"                                      
                                             }
                                         ),
-                                    ]),
-                                    style={
-                                        'borderRadius': '10px',
-                                        'backgroundColor': '#B0E0E6',
-                                        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
-                                        'minHeight': '20px',
-                                        'padding': '6px',
-                                        'margin-bottom': '10px',
-                                        'width': '230px',
-                                    }
+                                    ], style={"textAlign": "center", "padding": "1rem"}),
+                                    style=modern_card_style_blue
                                 ),
                                 dbc.Card(
                                     dbc.CardBody([
-                                        html.H4(
+                                        html.H5(
                                             "CC/AP",
-                                            className="card-text",
-                                            style={
-                                                'fontSize': '16px',
-                                                'color': '#000',
-                                                'fontWeight': 'bold',
-                                                'fontFamily': 'Montserrat',
-                                                'margin-bottom': '5px'
-                                            }
-                                        ),
-                                        html.P(
-                                            id="card-cc-ap-completo",
                                             className="card-title",
-                                            style={
-                                                'fontSize': '14px',
-                                                'color': '#000',
-                                                'margin': '0'
+                                            style={"fontWeight": "600",  "color": "white", "marginBottom": "0.5rem", "fontSize": "14px"
                                             }
                                         ),
-                                    ]),
-                                    style={
-                                        'borderRadius': '10px',
-                                        'backgroundColor': '#B0E0E6',
-                                        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
-                                        'minHeight': '20px',
-                                        'padding': '6px',
-                                        'margin-bottom': '10px',
-                                        'width': '230px',
-                                    }
+                                        html.H2(
+                                            id="card-cc-ap-completo",
+                                            style={
+                                                "fontWeight": "700", "color": "white", "margin": "0", "fontSize": "16px"                                      
+                                            }
+                                        ),
+                                    ], style={"textAlign": "center", "padding": "1rem"}),
+                                    style=modern_card_style_blue
                                 ),
                                 dbc.Card(
                                     dbc.CardBody([
-                                        html.H4(
+                                        html.H5(
                                             "CC/VGV",
-                                            className="card-text",
-                                            style={
-                                                'fontSize': '16px',
-                                                'color': '#000',
-                                                'fontWeight': 'bold',
-                                                'fontFamily': 'Montserrat',
-                                                'margin-bottom': '5px'
-                                            }
-                                        ),
-                                        html.P(
-                                            id="card-cc-vgv-completo",
                                             className="card-title",
-                                            style={
-                                                'fontSize': '14px',
-                                                'color': '#000',
-                                                'margin': '0'
+                                            style={"fontWeight": "600",  "color": "white", "marginBottom": "0.5rem", "fontSize": "14px"
                                             }
                                         ),
-                                    ]),
-                                    style={
-                                        'borderRadius': '10px',
-                                        'backgroundColor': '#d4edda',
-                                        'boxShadow': '0 4px 8px rgba(0, 0, 0, 0.2)',
-                                        'minHeight': '20px',
-                                        'padding': '6px',
-                                        'margin-bottom': '10px',
-                                        'width': '230px',
-                                    }
+                                        html.H2(
+                                            id="card-cc-vgv-completo",
+                                            style={
+                                                "fontWeight": "700", "color": "white", "margin": "0", "fontSize": "16px"                                      
+                                            }
+                                        ),
+                                    ], style={"textAlign": "center", "padding": "1rem"}),
+                                    style=modern_card_style_green
                                 ),
                             ],
                             width=11,
                             md=4,
                             style={'margin-left': '20px'}
                         ),
-
                     ],
                     align="start",
                     justify="between",
                     className="mb-4"
                 ),
 
-                # Componente dcc.Download
+                # Componentes dcc.Download
                 dcc.Download(id="download-dataframe-xlsx-completo"),
                 dcc.Download(id="download-pdf-completo"),
 
@@ -437,7 +403,7 @@ layout = html.Div(
                             id='pyramid-chart-completo',
                             figure=pyramid_chart_figure,
                             config={'responsive': True},
-                            style={'height': '650px', 'width': '100%', 'margin-top': '40px'}
+                            style={'height': '650px', 'width': '105%', 'margin-top': '40px'}
                         ),
                         width=10
                     ),

@@ -125,6 +125,16 @@ h5, h6, p, a, label, input, button, table {
    RESPONSIVIDADE
    ================================================== */
 
+@media (min-width: 1025px) and (max-width: 1366px) {
+    .sidebar {
+        width: 210px; /* ou outro valor ideal para notebooks */
+    }
+    .main-content {
+        margin-left: 220px; /* ajuste para compensar a nova largura do sidebar */
+    }
+}
+
+
 @media (max-width: 1024px) {
     .sidebar {
         width: 200px;
@@ -151,6 +161,13 @@ h5, h6, p, a, label, input, button, table {
         margin-left: 170px;
     }
 }
+
+@media (max-width: 1024px) {
+    .sidebar-logo {
+        width: 60px;
+    }
+}
+
 
 /* ==================================================
    ESTILOS DE IMAGENS E LOGOS
@@ -266,3 +283,5 @@ input[type="text"], input[type="number"] {
     font-size: 0.8rem; /* Antes 0.9rem */
     color: #3c5f6e;
 }
+
+

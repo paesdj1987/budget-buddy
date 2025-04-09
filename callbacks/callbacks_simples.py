@@ -9,11 +9,13 @@ import io
 import tempfile
 import textwrap
 import datetime
+import re
 from matplotlib import cm, colors  
 from dash.dependencies import Input, Output, State
 from dash.exceptions import PreventUpdate
 from dash import dcc
 from dash import callback_context
+from dash import html
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
@@ -23,15 +25,15 @@ from reportlab.lib.colors import HexColor
 from PIL import Image
 
 
+
 # Função para converter valores de string no formato "000.000.000,00" para float
 def convert_to_float(value):
     try:
         if isinstance(value, str):
-            # Remove todos os pontos (separadores de milhares) e troca a vírgula pelo ponto como separador decimal
             value = value.replace('.', '').replace(',', '.')
         return float(value)
     except (ValueError, TypeError):
-        return 0.0  # Retorna 0.0 se a conversão falhar
+        return 0.0  
 
 # Função para converter float para string no formato "000.000.000,00"
 def convert_from_float(value):
@@ -40,6 +42,7 @@ def convert_from_float(value):
     except (ValueError, TypeError):
         return '0,00'
 
+
 def register_callbacks_simples(app):
     # Definir cores personalizadas (custom_colors)
     custom_colors = [
@@ -47,8 +50,28 @@ def register_callbacks_simples(app):
         '#FF9800', '#FB8C00', '#F57C00', '#EF6C00', '#E65100',
         '#DD2C00'
     ]
+
+    # ***************************
+    # Callback para atualizar o link do Google Maps no ícone
+    # ***************************
+    @app.callback(
+        Output("maps-link", "href"),
+        Input("localizacao", "value")
+    )
+    def update_google_maps_link(address):
+        if not address or address.strip() == "":
+            return None  
+
+        # Criar o link do Google Maps formatado
+        base_url = "https://www.google.com/maps/search/?api=1&query="
+        formatted_address = address.replace(" ", "+")  
+        return base_url + formatted_address
+
     
-    # Callback para preenchimento da lista suspensa -------------------------
+
+    # ***************************
+    # Callback para preenchimento da lista suspensa 
+    # ***************************
     @app.callback(
     [
         Output('fechamento-perimetral', 'value'),
@@ -108,7 +131,9 @@ def register_callbacks_simples(app):
 
         return [None]*12
     
-    # Callback para salvar os dados no dcc.Store sempre que qualquer input for alterado -------------------------
+    # ***************************
+    # Callback para salvar dados do formulário Orçamento Simples em dcc.Store 
+    # ***************************
     @app.callback(
         Output('shared-data', 'data'),
         [
@@ -270,6 +295,19 @@ def register_callbacks_simples(app):
             convert_from_float(data.get('quadra_society', 0)),
         ]
 
+    # Callback para gerar o relatório simples -------------------------
+    @app.callback(
+        Output('url', 'pathname'),
+        [Input('generate-report-button', 'n_clicks')],
+        [State('shared-data', 'data')]
+    )
+    def generate_simple_report(n_clicks, data):
+        if n_clicks is None or n_clicks == 0:
+            raise PreventUpdate
+        if data is None:
+            raise PreventUpdate
+        return '/relatorio-simples'
+
     # Lista dos campos do formulário que serão limpos
     FIELDS_TO_CLEAR = [
         "responsavel-relatorio-simples",
@@ -306,32 +344,13 @@ def register_callbacks_simples(app):
 
     # Callback para limpar os campos do formulário Orçamento Simples -------------------------
     @app.callback(
-        [Output(field_id, "value") for field_id in FIELDS_TO_CLEAR],
+        [Output(field, "value") for field in FIELDS_TO_CLEAR] + [Output('shared-data', 'data')],
         Input("clear-button", "n_clicks")
     )
-    def clear_form_fields(n_clicks):
+    def clear_simple_form(n_clicks):
         if not n_clicks:
             raise PreventUpdate
-
-        # Retorna None para cada campo da lista
-        return [None] * len(FIELDS_TO_CLEAR)
-
-
-
-    # Callback para gerar o relatório simples -------------------------
-    @app.callback(
-        Output('url', 'pathname'),
-        [Input('generate-report-button', 'n_clicks')],
-        [State('shared-data', 'data')]
-    )
-    def generate_simple_report(n_clicks, data):
-        if n_clicks is None or n_clicks == 0:
-            raise PreventUpdate
-        if data is None:
-            raise PreventUpdate
-
-        # Redireciona o usuário para a página de relatório
-        return '/relatorio-simples'
+        return [None] * len(FIELDS_TO_CLEAR) + [None]
 
     
     # Callback para atualizar a tabela, os cards e gerar o gráfico de barras na página Relatório Simples -------------------------
@@ -346,14 +365,17 @@ def register_callbacks_simples(app):
             Output('card-cc-ap', 'children'),
             Output('card-cc-vgv', 'children'),
         ],
-        [Input('url', 'pathname')],
-        [State('shared-data', 'data')]
+            Input('url', 'pathname'),
+            Input('shared-data', 'data'),   
     )
     def update_results_table_and_graph(pathname, data):
         if pathname != '/relatorio-simples':
             raise PreventUpdate
         if data is None:
-            return [], {}, "", "", "", "", ""
+            return [], {}, "", "", "", "", "", ""
+        
+        def get_value(key):
+            return data.get(key, 0.0)
 
         # DADOS URBANÍSTICOS 
         perimetro = convert_to_float(data.get('perimetro', 0.0))
@@ -539,18 +561,18 @@ def register_callbacks_simples(app):
             xaxis=dict(
                 title=dict(
                     text="Percentual (%)",  
-                    font=dict(size=16, family="Arial")
+                    font=dict(size=16, family="Montserrat")
                 ),
-                tickfont=dict(size=14, family="Arial"),
+                tickfont=dict(size=14, family="Montserrat"),
                 gridcolor="rgba(200,200,200,0.5)",
                 zeroline=False,
             ),
             yaxis=dict(
                 title=dict(
                     text="Serviços",  
-                    font=dict(size=16, family="Arial")
+                    font=dict(size=16, family="Montserrat")
                 ),
-                tickfont=dict(size=14, family="Arial"),
+                tickfont=dict(size=14, family="Montserrat"),
                 categoryorder="total ascending",
             ),
             paper_bgcolor="white",
@@ -563,8 +585,9 @@ def register_callbacks_simples(app):
         return table_data, fig, card_id_loteamento, card_valor_total, card_cc_fip, card_cc_at, card_cc_ap, card_cc_vgv
 
 
-
-    # Callback para exportar a tabela para Excel -----------------------------------------
+    # ====================================================================================
+    # Callback para exportar a tabela para Excel 
+    # ====================================================================================
     @app.callback(
         Output("download-dataframe-xlsx", "data"),
         [Input("export-button", "n_clicks")],
@@ -583,231 +606,203 @@ def register_callbacks_simples(app):
             df.to_excel, "relatorio_simples.xlsx", sheet_name="Relatório Simples", index=False
         )
 
-
-    # Callback para gerar PDF -----------------------------------------
+    # ====================================================================================
+    # CALLBACK PARA GERAR PDF (Orçamento Simplificado)
+    # ====================================================================================
     @app.callback(
         Output('download-pdf', 'data'),
         [Input('generate-pdf-button', 'n_clicks')],
         [
             State('results-table', 'data'),
             State('card-id-loteamento', 'children'),
-            State('card-valor-total', 'children'),   
-            State('card-sub-total', 'children'),
+            State('card-valor-total', 'children'),
+            State('card-cc-fip', 'children'),
             State('card-cc-at', 'children'),
             State('card-cc-ap', 'children'),
             State('card-cc-vgv', 'children'),
-            State('shared-data', 'data'), 
+            State('shared-data', 'data'),
         ],
         prevent_initial_call=True
     )
-    def generate_pdf(n_clicks, table_data, id_loteamento, valor_total_orcamento, subtotal, cc_at, cc_ap, cc_vgv, input_data):
+    def generate_pdf(n_clicks, table_data, id_loteamento, valor_total_orcamento, cc_fip, cc_at, cc_ap, cc_vgv, input_data):
         if n_clicks is None or not table_data:
             raise PreventUpdate
 
         try:
+            import datetime, tempfile, textwrap
+            from reportlab.lib.pagesizes import letter, landscape
+            from reportlab.lib.colors import HexColor
+            from reportlab.pdfgen import canvas
+            from matplotlib.colors import LinearSegmentedColormap
+            import matplotlib.pyplot as plt
+            import io
+
             buffer = io.BytesIO()
             pdf = canvas.Canvas(buffer, pagesize=landscape(letter))
             pdf.setTitle("Orçamento Simplificado")
-
-            # Dimensões da página
             pagina_largura, pagina_altura = landscape(letter)
-           
-           ### ===================== PÁGINA 1 ===================== 
-           
-            # 1) Preencher com cor de fundo
-            pdf.setFillColor(HexColor("#345F6C"))  # Define a cor de fundo
-            pdf.rect(0, 0, pagina_largura, pagina_altura, fill=1)  # Preenche toda a página
 
-            # 2) Inserir o título "Orçamento Paramétrico" centralizado acima da logo
-            pdf.setFillColor(HexColor("#FFFFFF"))  # Cor branca para o texto
+            # --------------------------------------------------------------------------------
+            # PÁGINA 1 (Capa)
+            # --------------------------------------------------------------------------------
+            # Fundo
+            pdf.setFillColor(HexColor("#3d5462"))
+            pdf.rect(0, 0, pagina_largura, pagina_altura, fill=1)
+            # Título
+            pdf.setFillColor(HexColor("#FFFFFF"))
             pdf.setFont("Helvetica-Bold", 30)
             titulo_capa = "Orçamento Paramétrico"
             titulo_largura = pdf.stringWidth(titulo_capa, "Helvetica-Bold", 26)
-            pdf.drawString(
-                (pagina_largura - titulo_largura) / 2,  # Centralizar na página
-                pagina_altura - 120,  # Posicionamento vertical (ajustável)
-                titulo_capa
-            )
-
-            # 3) Inserir a logo centralizada (ajustando proporção corretamente)
+            pdf.drawString((pagina_largura - titulo_largura) / 2, pagina_altura - 120, titulo_capa)
+            # Logo na capa
             try:
                 capa_logo = "assets/logoor2.png"
-                
-                # Definir um tamanho base sem distorção
-                max_width = 300  # Largura máxima permitida
-                max_height = 130  # Altura máxima permitida
-
-                # Obter dimensões originais da imagem
+                max_width = 300
+                max_height = 130
                 from PIL import Image
                 with Image.open(capa_logo) as img:
                     original_width, original_height = img.size
-                    aspect_ratio = original_width / original_height  # Proporção original da imagem
-                
-                # Calcular novo tamanho mantendo a proporção
+                    aspect_ratio = original_width / original_height
                 if original_width > max_width or original_height > max_height:
-                    if aspect_ratio > 1:  # Se for mais larga do que alta
+                    if aspect_ratio > 1:
                         new_width = max_width
                         new_height = max_width / aspect_ratio
-                    else:  # Se for mais alta do que larga
+                    else:
                         new_height = max_height
                         new_width = max_height * aspect_ratio
                 else:
-                    new_width, new_height = original_width, original_height  # Mantém tamanho original se for pequeno
-
-                # Posicionar no centro
+                    new_width, new_height = original_width, original_height
                 x_center = (pagina_largura - new_width) / 2
-                y_center = pagina_altura - 350  # Ajuste fino da posição vertical
-
-                # Inserir a logo ajustada
-                pdf.drawImage(
-                    capa_logo,
-                    x_center,
-                    y_center,
-                    width=new_width,
-                    height=new_height,
-                    mask='auto'
-                )
+                y_center = pagina_altura - 350
+                pdf.drawImage(capa_logo, x_center, y_center, width=new_width, height=new_height, mask='auto')
             except Exception as e:
                 print(f"Erro ao inserir a logo de capa: {e}")
-                
-            # 4) Inserir o texto do campo "info-geral" abaixo da logo (centralizado)
+
+            # Texto info-geral na capa
             pdf.setFont("Helvetica", 16)
-            pdf.setFillColor(HexColor("#FFFFFF"))  # Cor branca para manter o padrão visual
-            
-            # Obter o texto do campo "info-geral"
+            pdf.setFillColor(HexColor("#FFFFFF"))
             info_geral_texto = input_data.get('info_geral', 'Nenhuma informação disponível')
-
-            # Definir a posição centralizada abaixo da logo
-            y_texto = y_center - 60  # Ajuste da posição abaixo da logo
+            y_texto = y_center - 60
             text_width = pdf.stringWidth(info_geral_texto, "Helvetica", 16)
-
-            # Se o texto for maior que um certo limite, dividir em múltiplas linhas
-            max_line_width = 600  # Limite máximo de largura do texto
+            max_line_width = 600
             if text_width > max_line_width:
-                linhas = textwrap.wrap(info_geral_texto, width=70)  # Divide o texto em múltiplas linhas
-                
+                linhas = textwrap.wrap(info_geral_texto, width=70)
                 for linha in linhas:
-                    text_width = pdf.stringWidth(linha, "Helvetica", 16)
-                    pdf.drawString((pagina_largura - text_width) / 2, y_texto, linha)
-                    y_texto -= 20  # Pular linha
+                    lw = pdf.stringWidth(linha, "Helvetica", 16)
+                    pdf.drawString((pagina_largura - lw) / 2, y_texto, linha)
+                    y_texto -= 20
             else:
                 pdf.drawString((pagina_largura - text_width) / 2, y_texto, info_geral_texto)
 
-            # 5) Inserir nome do responsável na parte inferior esquerda
+            # Responsável (inferior esquerdo)
             pdf.setFont("Helvetica", 16)
-            pdf.setFillColor(HexColor("#FFFFFF"))  # Texto branco
+            pdf.setFillColor(HexColor("#FFFFFF"))
             responsavel_texto = f"Responsável: {input_data.get('responsavel_relatorio_simples', 'Não informado')}"
-            pdf.drawString(50, 50, responsavel_texto)  # Posiciona no canto inferior esquerdo
-
-            # 6) Inserir data na parte inferior direita da Página 1
-            pdf.setFont("Helvetica", 16)
-            pdf.setFillColor(HexColor("#FFFFFF"))  # Texto branco
-            
-            # Capturar data atual no formato DD/MM/AAAA
+            pdf.drawString(50, 50, responsavel_texto)
+            # Data (inferior direito)
             data_atual = datetime.datetime.now().strftime("%d/%m/%Y")
-            
-            # Definir a posição na parte inferior direita
             data_text_width = pdf.stringWidth(data_atual, "Helvetica", 16)
-            pdf.drawString(pagina_largura - data_text_width - 50, 50, data_atual)  # Posição inferior direita
+            pdf.drawString(pagina_largura - data_text_width - 50, 50, data_atual)
 
-            # 7) Finalizar a capa e seguir para a próxima página
             pdf.showPage()
 
-                
-           ### ===================== PÁGINA 2 =====================
-            
-            y_position = pagina_altura - 50
+            # --------------------------------------------------------------------------------
+            # PÁGINA 2 
+            # --------------------------------------------------------------------------------
+            bar_height = 60
+            pdf.setFillColor(HexColor("#3d5462"))
+            pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
 
-            # Inserir logo no canto superior direito
-            logo_path = 'assets/logoor.png'
+            # Inserir a logoor2.png à esquerda da barra
+            logo_path = "assets/logoor2.png"
             try:
-                pdf.drawImage(
-                    logo_path,
-                    x=pagina_largura - 90,
-                    y=pagina_altura - 60,
-                    width=80,
-                    height=40,
-                    mask='auto'
-                )
+                logo_y = pagina_altura - bar_height + (bar_height - 40) / 2
+                pdf.drawImage(logo_path, x=10, y=logo_y, width=80, height=40, mask='auto')
             except Exception as e:
-                print(f"Erro ao inserir a logo: {e}")
+                print(f"Erro ao inserir a logo esquerda: {e}")
 
-            # ---------------------------------------------------------------------
-            # 1. Exibir título usando y_position
-            # ---------------------------------------------------------------------
+            # Inserir o simbolo_or.png à direita da barra
+            simbolo_path = "assets/simbolo_or.png"
+            try:
+                pdf.drawImage(simbolo_path, x=pagina_largura - 90, y=logo_y, width=55, height=35, mask='auto')
+            except Exception as e:
+                print(f"Erro ao inserir o símbolo direito: {e}")
+
+            # Inserir o título dentro da barra, centralizado
             pdf.setFont("Helvetica-Bold", 16)
             titulo_texto = "Orçamento Simplificado"
             titulo_largura = pdf.stringWidth(titulo_texto, "Helvetica-Bold", 16)
-            pdf.drawString(
-                (pagina_largura - titulo_largura) / 2,
-                y_position,
-                titulo_texto
-            )
+            titulo_y = pagina_altura - bar_height + (bar_height - 16) / 2
+            pdf.setFillColor(HexColor("#FFFFFF"))
+            pdf.drawString((pagina_largura - titulo_largura) / 2, titulo_y, titulo_texto)
 
-            # Ajustar a posição vertical para a próxima linha abaixo do título
-            y_position -= 30
+            # Afastar o conteúdo da barra
+            y_position = pagina_altura - bar_height - 40
 
-            # Exibição dos Resultados ---------------------------
-            
+            # Resultados
+            pdf.setFillColor(HexColor("#4B2C20"))
             pdf.setFont("Helvetica-Bold", 10)
             pdf.drawString(50, y_position, "Resultados:")
+            pdf.setFillColor(HexColor("#000000"))
             y_position -= 15
-
-            # Ajustar fonte para destacar apenas os rótulos em negrito
-            pdf.setFont("Helvetica-Bold", 7)
-            pdf.drawString(50, y_position, "Valor Total do Orçamento: ")
-            pdf.setFont("Helvetica", 7)
-            pdf.drawString(200, y_position, f"{valor_total_orcamento}")
-            y_position -= 12
-
-            pdf.setFont("Helvetica-Bold", 7)
-            pdf.drawString(50, y_position, "Subtotal - (80% do valor total): ")
-            pdf.setFont("Helvetica", 7)
-            pdf.drawString(200, y_position, f"{subtotal}")
-            y_position -= 12
-
-            pdf.setFont("Helvetica-Bold", 7)
-            pdf.drawString(50, y_position, "CC/AT: ")
-            pdf.setFont("Helvetica", 7)
-            pdf.drawString(200, y_position, f"{cc_at}")
-            y_position -= 12
-
-            pdf.setFont("Helvetica-Bold", 7)
-            pdf.drawString(50, y_position, "CC/AP: ")
-            pdf.setFont("Helvetica", 7)
-            pdf.drawString(200, y_position, f"{cc_ap}")
-            y_position -= 12
-
-            pdf.setFont("Helvetica-Bold", 7)
-            pdf.drawString(50, y_position, "CC/VGV: ")
-            pdf.setFont("Helvetica", 7)
-            pdf.drawString(200, y_position, f"{cc_vgv}")
-            y_position -= 20  # Espaço adicional
-
-            # 4. Seção "Dados do Orçamento Simplificado" -------------------------------------------
-           
-            pdf.setFont("Helvetica-Bold", 10)
-            pdf.drawString(50, y_position, "Dados do Orçamento Simplificado:")
-            y_position -= 15
-
-            pdf.setFont("Helvetica", 8)
-
-            # Definir a ordem e os labels dos inputs
-            input_keys = [
-                'info_geral', 
-                'id_loteamento', 'localizacao', 'revisao', 'vgv', 'area_total', 'perimetro',
-                'area_lotes', 'area_viario', 'comprimento_viario', 'area_construida', 'area_quadra',
-                'dados_incc_antigo', 'dados_incc_atual', 'volume_corte', 'volume_aterro',
-                'volume_transporte', 'fechamento_perimetral', 'meio_fio', 'rede_eletrica',
-                'rede_agua', 'rede_drenagem', 'rede_esgoto', 'pavimentacao',
-                'supressao_vegetacao', 'custo_terraplanagem', 'edificacoes', 'quadra_society'
+            resultados = [
+                ("Valor Total do Orçamento", valor_total_orcamento),
+                ("CC/FIP", cc_fip),
+                ("CC/AT", cc_at),
+                ("CC/AP", cc_ap),
+                ("CC/VGV", cc_vgv),
             ]
+            for label, value in resultados:
+                pdf.setFont("Helvetica-Bold", 8)
+                pdf.drawString(50, y_position, f"{label}: ")
+                offset = pdf.stringWidth(f"{label}: ", "Helvetica-Bold", 8)
+                pdf.setFont("Helvetica", 8)
+                pdf.drawString(50 + offset, y_position, f"{value}")
+                y_position -= 16
+
+            # Linha laranja entre Resultados e Informações Gerais
+            pdf.setStrokeColor(HexColor("#FFA500"))
+            pdf.setLineWidth(1)
+            pdf.line(50, y_position, pagina_largura - 50, y_position)
+            pdf.setStrokeColor(HexColor("#000000"))
+            y_position -= 20
+
+            # Informações Gerais
+            pdf.setFillColor(HexColor("#283747"))
+            info_geral_value = input_data.get('info_geral', '')
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(50, y_position, "Informações Gerais:")
+            pdf.setFillColor(HexColor("#000000"))
+            y_position -= 12
+            pdf.setFont("Helvetica", 8)
+            text_object = pdf.beginText(50, y_position)
+            wrapped_lines = textwrap.wrap(info_geral_value, width=180)
+            for wrapped_line in wrapped_lines:
+                text_object.textLine(wrapped_line)
+                y_position -= 12
+                if y_position < 50:
+                    pdf.drawText(text_object)
+                    pdf.showPage()
+                    y_position = pagina_altura - 50
+                    pdf.setFont("Helvetica", 8)
+                    text_object = pdf.beginText(50, y_position)
+            pdf.drawText(text_object)
+            y_position -= 15
+
+            # Linha laranja entre Informações Gerais e Dados do Projeto
+            pdf.setStrokeColor(HexColor("#FFA500"))
+            pdf.setLineWidth(1)
+            pdf.line(50, y_position, pagina_largura - 50, y_position)
+            pdf.setStrokeColor(HexColor("#000000"))
+            y_position -= 15
+
+            # Rótulos de inputs
             input_labels = {
                 'info_geral': 'Informações Gerais',
                 'id_loteamento': 'ID Condomínios Horizontais',
                 'localizacao': 'Localização',
                 'revisao': 'Revisão',
-                'vgv': 'VGV',
+                'vgv': 'Valor de Venda/m²',
                 'area_total': 'Área Total do Terreno (m²)',
                 'perimetro': 'Perímetro do Terreno (m)',
                 'area_lotes': 'Área dos Lotes (m²)',
@@ -833,186 +828,389 @@ def register_callbacks_simples(app):
                 'quadra_society': 'Quadra Society (cc/m²)',
             }
 
-            info_geral_value = input_data.get('info_geral', '')
-
-            # Exibir "Informações Gerais:" e o conteúdo de info_geral
-            pdf.setFont("Helvetica-Bold", 8)
-            pdf.drawString(50, y_position, "Informações Gerais:")
-            y_position -= 12
-
-            pdf.setFont("Helvetica", 7)
-            text_object = pdf.beginText(50, y_position)
-            wrapped_lines = textwrap.wrap(info_geral_value, width=180)
-            for wrapped_line in wrapped_lines:
-                text_object.textLine(wrapped_line)
-                y_position -= 12
-                if y_position < 50:
-                    pdf.drawText(text_object)
-                    pdf.showPage()
-                    y_position = pagina_altura - 50
-                    pdf.setFont("Helvetica", 7)
-                    text_object = pdf.beginText(50, y_position)
-            pdf.drawText(text_object)
-            y_position -= 10
-
-            # Montar lista (label, valor)
-            input_items = []
-            for key in input_keys[1:]:  # Pulando 'info_geral' pois já foi exibido separadamente
-                label = input_labels.get(key, key)
-                value = input_data.get(key, '')
-                if isinstance(value, float):
-                    value_str = convert_from_float(value)
-                else:
-                    value_str = str(value)
-                input_items.append((label, value_str))
-
-            # Exibir dados organizados em colunas com espaçamento maior para evitar sobreposição
-            x_positions = [50, 280, 550]  
-            spacing_between_label_and_value = 140  # distância entre label e valor
-
-            for i in range(0, len(input_items), 3):
-                y_position -= 15
-                if y_position < 50:
-                    pdf.showPage()
-                    y_position = pagina_altura - 50
-                    pdf.setFont("Helvetica", 7)
-
-                for col in range(3):
-                    if i + col < len(input_items):
-                        label, value_str = input_items[i + col]
-                        pdf.setFont("Helvetica-Bold", 7)  # Rótulo em negrito
-                        pdf.drawString(x_positions[col], y_position, f"{label}:")
-                        pdf.setFont("Helvetica", 7)  # Valor em fonte normal
-                        pdf.drawString(x_positions[col] + spacing_between_label_and_value, y_position, f"{value_str}")
-
-            # Espaço antes da tabela
-            y_position -= 20
-            if y_position < 100:
-                pdf.showPage()
-                y_position = pagina_altura - 50
-                pdf.setFont("Helvetica", 8)
-
-            # 5. Seção "Resultados" --------------------------------------------------
-
+            # Dados do Projeto
+            dados_projeto_keys = [
+                'id_loteamento', 'localizacao', 'revisao', 'vgv',
+                'area_total', 'perimetro', 'area_lotes', 'area_viario',
+                'comprimento_viario', 'area_construida', 'area_quadra',
+                'dados_incc_antigo', 'dados_incc_atual', 'volume_corte',
+                'volume_aterro', 'volume_transporte'
+            ]
+            pdf.setFillColor(HexColor("#2E5633"))
             pdf.setFont("Helvetica-Bold", 10)
-            pdf.drawString(50, y_position, "Resultados:")
-            y_position -= 20  # Maior espaçamento antes da tabela
+            pdf.drawString(50, y_position, "Dados do Projeto:")
+            pdf.setFillColor(HexColor("#000000"))
+            y_position -= 15
 
-            # Cabeçalhos da tabela com negrito
-            pdf.setFont("Helvetica-Bold", 8)
+            n_cols = 3
+            row_height = 16
+            x_positions = [50, 280, 510]
+            n_rows = (len(dados_projeto_keys) + n_cols - 1) // n_cols
+            for row in range(n_rows):
+                for col in range(n_cols):
+                    index = row * n_cols + col
+                    if index < len(dados_projeto_keys):
+                        key = dados_projeto_keys[index]
+                        label = input_labels.get(key, key)
+                        value = input_data.get(key, '')
+                        if isinstance(value, float):
+                            value_str = convert_from_float(value)
+                        else:
+                            value_str = str(value)
+                        pdf.setFont("Helvetica-Bold", 8)
+                        pdf.drawString(x_positions[col], y_position - (row * row_height), f"{label}: ")
+                        offset = pdf.stringWidth(f"{label}: ", "Helvetica-Bold", 8)
+                        pdf.setFont("Helvetica", 8)
+                        pdf.drawString(x_positions[col] + offset, y_position - (row * row_height), value_str)
+            y_position -= n_rows * row_height + 20
+
+            # Linha laranja entre Dados do Projeto e Custo Unitário
+            pdf.setStrokeColor(HexColor("#FFA500"))
+            pdf.setLineWidth(1)
+            pdf.line(50, y_position, pagina_largura - 50, y_position)
+            pdf.setStrokeColor(HexColor("#000000"))
+            y_position -= 15
+
+            # Custo Unitário
+            custo_unitario_keys = [
+                'fechamento_perimetral', 'meio_fio', 'rede_eletrica',
+                'rede_agua', 'rede_drenagem', 'rede_esgoto', 'pavimentacao',
+                'supressao_vegetacao', 'custo_terraplanagem', 'edificacoes', 'quadra_society'
+            ]
+            pdf.setFillColor(HexColor("#1F3A52"))
+            pdf.setFont("Helvetica-Bold", 10)
+            pdf.drawString(50, y_position, "Custo Unitário:")
+            pdf.setFillColor(HexColor("#000000"))
+            y_position -= 15
+
+            n_cols = 3
+            row_height = 16
+            n_rows = (len(custo_unitario_keys) + n_cols - 1) // n_cols
+            for row in range(n_rows):
+                for col in range(n_cols):
+                    index = row * n_cols + col
+                    if index < len(custo_unitario_keys):
+                        key = custo_unitario_keys[index]
+                        label = input_labels.get(key, key)
+                        value = input_data.get(key, '')
+                        if isinstance(value, float):
+                            value_str = f"{value:.2f}".replace('.', ',')
+                        else:
+                            value_str = str(value)
+                        value_str = f"R$ {value_str}"
+                        pdf.setFont("Helvetica-Bold", 8)
+                        pdf.drawString(x_positions[col], y_position - (row * row_height), f"{label}: ")
+                        offset = pdf.stringWidth(f"{label}: ", "Helvetica-Bold", 8)
+                        pdf.setFont("Helvetica", 8)
+                        pdf.drawString(x_positions[col] + offset, y_position - (row * row_height), value_str)
+            y_position -= n_rows * row_height
+
+            pdf.showPage()
+
+            # --------------------------------------------------------------------------------
+            # PÁGINA 3 (seção "Custo por Item de Execução")
+            # --------------------------------------------------------------------------------
+            bar_height = 60
+            pdf.setFillColor(HexColor("#3d5462"))
+            pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
+
+            # Inserir a logoor2.png à esquerda da barra
+            logo_path = "assets/logoor2.png"
+            try:
+                logo_y = pagina_altura - bar_height + (bar_height - 40) / 2
+                pdf.drawImage(logo_path, x=10, y=logo_y, width=80, height=40, mask='auto')
+            except Exception as e:
+                print(f"Erro ao inserir a logo esquerda: {e}")
+
+            # Inserir o simbolo_or.png à direita da barra
+            simbolo_path = "assets/simbolo_or.png"
+            try:
+                pdf.drawImage(simbolo_path, x=pagina_largura - 90, y=logo_y, width=55, height=35, mask='auto')
+            except Exception as e:
+                print(f"Erro ao inserir o símbolo direito: {e}")
+
+            # Inserir o título dentro da barra, centralizado
+            pdf.setFont("Helvetica-Bold", 16)
+            titulo_texto = "Orçamento Simplificado"
+            titulo_largura = pdf.stringWidth(titulo_texto, "Helvetica-Bold", 16)
+            titulo_y = pagina_altura - bar_height + (bar_height - 16) / 2
+            pdf.setFillColor(HexColor("#FFFFFF"))
+            pdf.drawString((pagina_largura - titulo_largura) / 2, titulo_y, titulo_texto)
+
+            # Afastar o conteúdo da barra
+            y_position = pagina_altura - bar_height - 40
+
+
+            pdf.setFillColor(HexColor("#2D4159"))
+            pdf.setFont("Helvetica-Bold", 12)
+            pdf.drawString(50, y_position, "Custo por Item de Execução: ")
+            pdf.setFillColor(HexColor("#000000"))
+            y_position -= 25
+
+            pdf.setFillColor(HexColor("#4B2C20"))
+            pdf.setFont("Helvetica-Bold", 10)
             headers = ["Item", "Valor Total Corrigido"]
-            x_positions_table = [50, 200]  # Ajustando a posição das colunas
-
+            x_positions_table = [50, 250]
             for i, header in enumerate(headers):
                 pdf.drawString(x_positions_table[i], y_position, header)
-            y_position -= 15  # Ajuste de espaçamento abaixo do cabeçalho
+            y_position -= 20
+            pdf.setFillColor(HexColor("#000000"))
 
-            # Dados da tabela
-            pdf.setFont("Helvetica", 8)
-            spacing_between_label_and_value = 135  # Distância entre label e valor ajustada
-
+            pdf.setFont("Helvetica", 9)
+            row_height = 18
+            total_valor = 0
             for item in table_data:
                 item_name = item.get('item', '')
                 valor_total_corrigido = convert_to_float(item.get('valor_total_corrigido', 0.0))
-
-                valor_total_corrigido_str = f"R$ {convert_from_float(valor_total_corrigido)}"
-
-                # Rótulo do item em negrito
-                pdf.setFont("Helvetica-Bold", 7)
+                valor_total_str = f"R$ {convert_from_float(valor_total_corrigido)}"
+                total_valor += valor_total_corrigido
+                pdf.setFont("Helvetica-Bold", 8)
                 pdf.drawString(x_positions_table[0], y_position, str(item_name))
-
-                # Valor total corrigido em fonte normal
-                pdf.setFont("Helvetica", 7)
-                pdf.drawString(x_positions_table[1], y_position, valor_total_corrigido_str)
-                
-                y_position -= 12  # Ajuste de espaçamento entre as linhas
-
-                if y_position < 50:  # Se chegar ao fim da página, cria uma nova página
+                pdf.setFont("Helvetica", 8)
+                pdf.drawString(x_positions_table[1], y_position, valor_total_str)
+                y_position -= row_height
+                if y_position < 50:
                     pdf.showPage()
                     y_position = pagina_altura - 50
                     pdf.setFont("Helvetica", 8)
 
+            subtotal_valor_corrigido = total_valor * 0.2
+            pdf.setStrokeColor(HexColor("#FF9999"))
+            pdf.setLineWidth(1)
+            pdf.line(50, y_position, pagina_largura - 450, y_position)
+            pdf.setStrokeColor(HexColor("#000000"))
+            y_position -= 15
 
-            ### ===================== PÁGINA 3 =====================
-            
+            pdf.setFont("Helvetica-Bold", 9)
+            pdf.drawString(x_positions_table[0], y_position, "Serviços Complementares (20%):")
+            pdf.setFont("Helvetica-Bold", 9)
+            pdf.drawString(x_positions_table[1], y_position, f"R$ {convert_from_float(subtotal_valor_corrigido)}")
+            y_position -= 10
+
+            pdf.setStrokeColor(HexColor("#FFA500"))
+            pdf.setLineWidth(0.5)
+            pdf.line(50, y_position, pagina_largura - 450, y_position)
+            pdf.setStrokeColor(HexColor("#000000"))
+            y_position -= 15
+
+            pdf.setFont("Helvetica-Bold", 9)
+            pdf.drawString(x_positions_table[0], y_position, "Total:")
+            pdf.setFont("Helvetica-Bold", 9)
+            pdf.drawString(x_positions_table[1], y_position, f"R$ {convert_from_float(total_valor)}")
             pdf.showPage()
-            y_position = pagina_altura - 50
 
+            # --------------------------------------------------------------------------------
+            # PÁGINA 4 (Gráfico - Participação Percentual dos Serviços)
+            # --------------------------------------------------------------------------------
+            bar_height = 60
+            pdf.setFillColor(HexColor("#3d5462"))
+            pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
+
+            # Inserir a logoor2.png à esquerda da barra
+            logo_path = "assets/logoor2.png"
             try:
-                pdf.drawImage(
-                    logo_path,
-                    x=pagina_largura - 90,
-                    y=pagina_altura - 60,
-                    width=80,
-                    height=40,
-                    mask='auto'
-                )
+                logo_y = pagina_altura - bar_height + (bar_height - 40) / 2
+                pdf.drawImage(logo_path, x=10, y=logo_y, width=80, height=40, mask='auto')
             except Exception as e:
-                print(f"Erro ao inserir a logo: {e}")
+                print(f"Erro ao inserir a logo esquerda: {e}")
 
+            # Inserir o simbolo_or.png à direita da barra
+            simbolo_path = "assets/simbolo_or.png"
+            try:
+                pdf.drawImage(simbolo_path, x=pagina_largura - 90, y=logo_y, width=55, height=35, mask='auto')
+            except Exception as e:
+                print(f"Erro ao inserir o símbolo direito: {e}")
+
+            # Inserir o título centralizado dentro da barra
             pdf.setFont("Helvetica-Bold", 16)
-            titulo_grafico = "Gráfico"
+            titulo_grafico = "Gráfico de Participação Percentual dos Serviços"
             titulo_largura = pdf.stringWidth(titulo_grafico, "Helvetica-Bold", 16)
-            pdf.drawString((pagina_largura - titulo_largura) / 2, y_position, titulo_grafico)
-            y_position -= 30
+            titulo_y = pagina_altura - bar_height + (bar_height - 16) / 2
+            pdf.setFillColor(HexColor("#FFFFFF"))
+            pdf.drawString((pagina_largura - titulo_largura) / 2, titulo_y, titulo_grafico)
 
-            # Construir gráfico Matplotlib
+            # Definir a posição para iniciar o conteúdo abaixo da barra
+            y_position = pagina_altura - bar_height - 40
+
+
+            # Combinar "Edificações" e "Quadra Society" em um único item "Áreas Comuns"
+            area_comuns_valor = 0
+            data_para_grafico = []
+            for item in table_data:
+                if item['item'] in ["Edificações", "Quadra Society"]:
+                    area_comuns_valor += convert_to_float(item['valor_total_corrigido'])
+                else:
+                    data_para_grafico.append(item)
+            if area_comuns_valor > 0:
+                data_para_grafico.append({
+                    "item": "Áreas Comuns",
+                    "valor_total_corrigido": convert_from_float(area_comuns_valor)
+                })
+
+            # Criando o gráfico no Matplotlib
             fig, ax = plt.subplots(figsize=(14, 6))
 
-            itens = [item['item'] for item in table_data]
-            valores = [convert_to_float(item['valor_total_corrigido']) for item in table_data]
+            # Extração dos dados a partir de data_para_grafico
+            itens = [item['item'] for item in data_para_grafico]
+            valores = [convert_to_float(item['valor_total_corrigido']) for item in data_para_grafico]
             total_valores = sum(valores)
-            percentuais = [(v / total_valores) * 100 if total_valores != 0 else 0 for v in valores]
 
+            # Calcula percentuais e ordena os itens
+            percentuais = [(v / total_valores) * 100 if total_valores else 0 for v in valores]
             data_for_chart = sorted(zip(percentuais, itens, valores), reverse=True)
             percentuais_ordenados, itens_ordenados, valores_ordenados = zip(*data_for_chart)
 
+            # Definição da paleta de cores
             strong_orange_colors = ['#FFA726', '#FF9800', '#FB8C00', '#F57C00', '#EF6C00', '#E65100']
             cmap = LinearSegmentedColormap.from_list('strong_orange', strong_orange_colors)
+
+            # Normalizando valores para mapeamento de cores
             max_valor = max(valores_ordenados)
             min_valor = min(valores_ordenados)
             valor_range = max_valor - min_valor if max_valor != min_valor else 1
             norm_valores = [(val - min_valor) / valor_range for val in valores_ordenados]
             cores_mapeadas = [cmap(nval) for nval in norm_valores]
-            cores_hex = [
-                '#{:02x}{:02x}{:02x}'.format(
-                    int(r * 255), int(g * 255), int(b * 255)
-                ) for r, g, b, _ in cores_mapeadas
-            ]
+            cores_hex = ['#{:02x}{:02x}{:02x}'.format(int(r * 255), int(g * 255), int(b * 255)) for r, g, b, _ in cores_mapeadas]
 
+            # Criando as barras horizontais
             bars = ax.barh(itens_ordenados, percentuais_ordenados, color=cores_hex)
-            for bar, percentual in zip(bars, percentuais_ordenados):
-                width = bar.get_width()
+
+            # Removendo a borda
+            for spine in ax.spines.values():
+                spine.set_visible(False)
+
+            # Adicionando rótulos à direita das barras
+            for bar, percentual, valor in zip(bars, percentuais_ordenados, valores_ordenados):
+                valor_formatado = f"R$ {convert_from_float(valor)}"
+                annotation_text = f"{percentual:.2f}% ({valor_formatado})"
                 ax.annotate(
-                    f'{percentual:.2f}%',
-                    xy=(width, bar.get_y() + bar.get_height() / 2),
+                    annotation_text,
+                    xy=(bar.get_width(), bar.get_y() + bar.get_height() / 2),
                     xytext=(5, 0),
                     textcoords="offset points",
                     ha='left',
                     va='center',
                     fontsize=10,
+                    weight='bold',
                     color='black'
                 )
+
+            # Ajustes no layout do gráfico
             ax.invert_yaxis()
-            ax.set_title('Participação Percentual dos Serviços', fontsize=14, weight='bold')
             ax.set_xlabel('Percentual (%)', fontsize=12)
             ax.set_ylabel('Serviços', fontsize=12)
             ax.tick_params(axis='x', labelsize=10)
             ax.tick_params(axis='y', labelsize=10)
             ax.grid(True, axis='x', linestyle='--', alpha=0.7)
+
             plt.tight_layout()
 
-            # Salvar gráfico temporário
+            # Salvar o gráfico temporariamente e inseri-lo no PDF
             with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
                 plt.savefig(tmpfile.name, format='png', bbox_inches='tight')
                 plt.close(fig)
-
-                # Inserir o gráfico no PDF
                 grafico_x = 50
                 grafico_y = (pagina_altura - 400) / 2
                 grafico_width = 700
                 grafico_height = 400
+                pdf.drawImage(tmpfile.name, x=grafico_x, y=grafico_y, width=grafico_width, height=grafico_height, mask='auto')
 
+            pdf.showPage()
+
+
+            # --------------------------------------------------------------------------------
+            # PÁGINA 5 (Gráfico - Custo de Construção)
+            # --------------------------------------------------------------------------------
+            bar_height = 60
+            pdf.setFillColor(HexColor("#3d5462"))
+            pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
+
+            # Inserir a logoor2.png à esquerda da barra
+            logo_path = "assets/logoor2.png"
+            try:
+                logo_y = pagina_altura - bar_height + (bar_height - 40) / 2
+                pdf.drawImage(logo_path, x=10, y=logo_y, width=80, height=40, mask='auto')
+            except Exception as e:
+                print(f"Erro ao inserir a logo esquerda: {e}")
+
+            # Inserir o simbolo_or.png à direita da barra
+            simbolo_path = "assets/simbolo_or.png"
+            try:
+                pdf.drawImage(simbolo_path, x=pagina_largura - 90, y=logo_y, width=55, height=35, mask='auto')
+            except Exception as e:
+                print(f"Erro ao inserir o símbolo direito: {e}")
+
+            # Inserir o título dentro da barra, centralizado
+            pdf.setFont("Helvetica-Bold", 16)
+            titulo_texto = "Gráfico de Custo de Construção"
+            titulo_largura = pdf.stringWidth(titulo_texto, "Helvetica-Bold", 16)
+            titulo_y = pagina_altura - bar_height + (bar_height - 16) / 2
+            pdf.setFillColor(HexColor("#FFFFFF"))
+            pdf.drawString((pagina_largura - titulo_largura) / 2, titulo_y, titulo_texto)
+
+            # Ajustar a posição do conteúdo abaixo da barra
+            y_position = pagina_altura - bar_height - 40
+
+
+            def to_float(valor_str):
+                if not isinstance(valor_str, str):
+                    try:
+                        return float(valor_str)
+                    except:
+                        return 0.0
+
+                apenas_numeros = re.sub(r"[^0-9.,]+", "", valor_str)
+                sem_pontos_milhar = apenas_numeros.replace(".", "")
+                padronizado = sem_pontos_milhar.replace(",", ".")
+                
+                try:
+                    resultado = float(padronizado)
+                except:
+                    resultado = 0.0
+                return resultado
+
+            # Converter
+            cc_fip_val = to_float(cc_fip)
+            cc_at_val = to_float(cc_at)
+            cc_ap_val = to_float(cc_ap)
+
+
+            labels = ["CC/FIP", "CC/AT", "CC/AP"]
+            values = [cc_fip_val, cc_at_val, cc_ap_val]
+
+            fig, ax = plt.subplots(figsize=(10, 5))
+            bar_colors = ["#FF9900", "#FF9900", "#FF9900"]
+            bars = ax.bar(labels, values, color=bar_colors, width=0.3)
+
+            ax.set_xlabel("Tipo", fontsize=12)
+            ax.set_ylabel("Valor (R$)", fontsize=12)
+            ax.yaxis.grid(True, linestyle="--", alpha=0.6)
+
+            max_val = max(values) if values else 0
+            ax.set_ylim([0, max_val * 1.2 if max_val else 1])
+
+            for bar in bars:
+                altura = bar.get_height()
+                ax.annotate(
+                    f"R$ {altura:,.2f}".replace(",", "X").replace(".", ",").replace("X", "."),
+                    xy=(bar.get_x() + bar.get_width() / 2, altura),
+                    xytext=(0, 5),
+                    textcoords="offset points",
+                    ha='center',
+                    va='bottom',
+                    fontsize=10,
+                    weight='bold'
+                )
+
+            plt.tight_layout()
+
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmpfile:
+                plt.savefig(tmpfile.name, format='png', bbox_inches='tight')
+                plt.close(fig)
+                grafico_x = 50
+                grafico_width = pagina_largura - 100
+                grafico_height = 400
+                grafico_y = (pagina_altura - grafico_height) / 2
                 pdf.drawImage(
                     tmpfile.name,
                     x=grafico_x,
@@ -1022,12 +1220,14 @@ def register_callbacks_simples(app):
                     mask='auto'
                 )
 
-            # Finalizar PDF
+            pdf.showPage()
+
+
             pdf.save()
             buffer.seek(0)
-
             return dcc.send_bytes(buffer.getvalue(), filename="relatorio_simplificado.pdf")
 
         except Exception as e:
             print(f"Erro ao gerar o PDF: {e}")
             raise PreventUpdate
+

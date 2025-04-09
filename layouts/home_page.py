@@ -5,6 +5,10 @@ from dash import html, dcc
 layout = html.Div(
     className="content-wrapper",
     children=[
+
+        # Espaçamento superior geral da página
+        html.Div(style={"padding-top": "10px"}),
+
         # Container das logos e do pipe
         html.Div(
             className="logo-container",
@@ -35,6 +39,7 @@ layout = html.Div(
                 dcc.Link(html.Button("Acessar Manual do Usuário", className="btn"), href="/manual-do-usuario"),
                 dcc.Link(html.Button("Acessar Orçamento Simplificado", className="btn"), href="/orcamento-simples"),
                 dcc.Link(html.Button("Acessar Orçamento Completo", className="btn"), href="/orcamento-completo"),
+                dcc.Link(html.Button("Acessar Dashboards", className="btn"), href="/dashboards"),
             ]
         ),
 

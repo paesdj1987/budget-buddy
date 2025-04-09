@@ -15,13 +15,13 @@ from layouts import (
 from layouts.sidebar import sidebar
 from callbacks.callbacks_simples import register_callbacks_simples  
 from callbacks.callbacks_completo import register_callbacks_completo
+from callbacks.callbacks_dashboards import register_callbacks_dashboards
 from dash_extensions.enrich import DashProxy, MultiplexerTransform, Input, Output  
-
 
 app = DashProxy(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP],
-    title="BudgetBuddy",  # Nome da aba no navegador
+    title="BudgetBuddy",
     suppress_callback_exceptions=True,
     transforms=[MultiplexerTransform()]
 )
@@ -33,7 +33,7 @@ app.layout = html.Div([
     dcc.Store(id='shared-data', storage_type='session'),
     dcc.Store(id='shared-data-completo', storage_type='session'),
     html.Div(id="page-content"),
-    html.Div(id='debug-output-completo', style={'whiteSpace': 'pre-wrap', 'padding': '20px'})  # Componente de depuração
+    html.Div(id='debug-output-completo', style={'whiteSpace': 'pre-wrap', 'padding': '20px'})
 ])
 
 @app.callback(
@@ -68,7 +68,7 @@ def render_page_content(pathname):
             sidebar,
             relatorio_completo_page.layout
         ])
-    elif pathname == "/dashboards":  
+    elif pathname == "/dashboards":
         return html.Div([sidebar, dashboards_page.layout])
     else:
         return html.Div([
@@ -76,9 +76,32 @@ def render_page_content(pathname):
             html.H3("404: Página não encontrada", style={"margin-left": "260px", "padding": "20px"})
         ])
 
-# Register callbacks
+# Novo callback para atualizar os links ativos do menu
+@app.callback(
+    [Output("navlink-home", "active"),
+     Output("navlink-manual", "active"),
+     Output("navlink-orc-simples", "active"),
+     Output("navlink-rel-simples", "active"),
+     Output("navlink-orc-completo", "active"),
+     Output("navlink-rel-completo", "active"),
+     Output("navlink-dashboards", "active")],
+    [Input("url", "pathname")]
+)
+def update_active_links(pathname):
+    return [
+        pathname == "/",
+        pathname == "/manual-do-usuario",
+        pathname == "/orcamento-simples",
+        pathname == "/relatorio-simples",
+        pathname == "/orcamento-completo",
+        pathname == "/relatorio-completo",
+        pathname == "/dashboards"
+    ]
+
+# Register callbacks dos outros módulos
 register_callbacks_simples(app)  
 register_callbacks_completo(app)
+register_callbacks_dashboards(app)
 
 if __name__ == '__main__':
-    app.run_server(debug=False, host='0.0.0.0', port='8051')
+    app.run(debug=False, host='0.0.0.0', port='8051')
