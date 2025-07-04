@@ -115,7 +115,7 @@ layout = html.Div(
                                                 "backgroundColor": "#ffffff",
                                                 "fontWeight": "bold",
                                                 "color": "#666",
-                                                "margin": "0 auto"  # Centraliza horizontalmente
+                                                "margin": "0 auto" 
                                             },
                                             multiple=False
                                         ),
@@ -260,10 +260,10 @@ layout = html.Div(
                                 html.Div(
                                     dcc.Graph(
                                         id="analysis-chart",
-                                        figure=go.Figure(),  # Figura vazia para ser atualizada pelo callback
-                                        style={"width": "100%", "height": "700px"},  # Altura fixa de 700px
+                                        figure=go.Figure(),  
+                                        style={"width": "100%", "height": "700px"}, 
                                         config={
-                                            "responsive": True,   # O gráfico se ajusta ao tamanho do container
+                                            "responsive": True,   
                                             "displayModeBar": True,
                                             "modeBarButtonsToAdd": ["toImage"],
                                             "toImageButtonOptions": {
@@ -275,7 +275,7 @@ layout = html.Div(
                                             }
                                         }
                                     ),
-                                    style={"width": "100%"}  # Garante que o div ocupe toda a largura disponível
+                                    style={"width": "100%"}  
                                 ),
                                 html.Br(),
                                 html.Div(
@@ -303,14 +303,14 @@ layout = html.Div(
                                 html.Div(
                                     dcc.Graph(
                                         id="slope-chart",
-                                        figure=go.Figure(),  # Seta figura vazia inicialmente
+                                        figure=go.Figure(),  
                                         config={
                                             "displayModeBar": True,
                                             "responsive": True
                                         },
-                                        style={"width": "100%", "height": "700px"}  # Força o gráfico a ocupar 100% da largura e 700px de altura
+                                        style={"width": "100%", "height": "700px"}  
                                     ),
-                                    style={"width": "100%"}  # Remove overflow ou qualquer limitação horizontal
+                                    style={"width": "100%"}  
                                 ),
                                 html.Br(),
                                 html.Div(

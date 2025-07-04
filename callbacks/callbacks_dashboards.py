@@ -41,7 +41,7 @@ def register_callbacks_dashboards(app):
         file_path = "assets/projeto.xlsx"
         if not os.path.exists(file_path):
             return dcc.send_string("Erro: Arquivo não encontrado!", filename="erro.txt"), None
-        return dcc.send_file(file_path), html.Span("✅ Download realizado com sucesso!", style={"font-weight": "bold"})
+        return dcc.send_file(file_path), html.Span("Download realizado com sucesso!", style={"font-weight": "bold"})
 
 
     @app.callback(

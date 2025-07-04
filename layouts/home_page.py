@@ -43,7 +43,7 @@ layout = html.Div(
             ]
         ),
 
-        # Texto de direitos autorais no canto inferior esquerdo
+        # Texto de direitos autorais 
         html.Div(
             "© 2025 OR Empreendimentos LTDA. Todos os direitos reservados.",
             className="footer"

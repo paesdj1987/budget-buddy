@@ -25,7 +25,7 @@ layout = html.Div(
         dbc.Container(
             fluid=True,
             children=[
-                html.Div(style={"padding-top": "40px"}),  # Espaçamento superior
+                html.Div(style={"padding-top": "40px"}),  
 
                 # TÍTULO PRINCIPAL
                 html.H3(

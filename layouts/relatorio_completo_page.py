@@ -287,7 +287,6 @@ layout = html.Div(
                                         ),
                                         html.H2(
                                             id="card-id-loteamento-completo",
-                                            #children="Sem informação",
                                             style={
                                                 "fontWeight": "700", "color": "white", "margin": "0", "fontSize": "16px"         
                                             }

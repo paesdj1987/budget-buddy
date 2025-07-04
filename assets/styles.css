@@ -11,12 +11,12 @@
 }
 
 /* Reduzindo levemente cada nível de título e texto */
-h1 { font-size: 1.6rem; } /* Antes 1.8rem */
-h2 { font-size: 1.4rem; } /* Antes 1.6rem */
-h3 { font-size: 1.2rem; } /* Antes 1.4rem */
-h4 { font-size: 1.0rem; } /* Antes 1.2rem */
+h1 { font-size: 1.6rem; } 
+h2 { font-size: 1.4rem; } 
+h3 { font-size: 1.2rem; } 
+h4 { font-size: 1.0rem; } 
 h5, h6, p, a, label, input, button, table {
-    font-size: 0.85rem; /* Antes 0.9rem */
+    font-size: 0.85rem; 
 }
 
 /* =============================
@@ -40,8 +40,8 @@ h5, h6, p, a, label, input, button, table {
 
 /* Título do Sidebar */
 .sidebar h2 {
-    color: #ECF0F1;      /* Cor clara para contraste */
-    font-size: 1.3rem;  /* Reduzido de 1.5rem */
+    color: #ECF0F1;     
+    font-size: 1.3rem;  
     font-weight: bold;
     margin-bottom: 20px;
     font-family: 'Montserrat', sans-serif;
@@ -60,7 +60,7 @@ h5, h6, p, a, label, input, button, table {
     align-items: center;
     padding: 12px;
     color: #BDC3C7;
-    font-size: 0.88rem; /* Reduzido de 0.95rem */
+    font-size: 0.88rem; 
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 5px;
@@ -127,10 +127,10 @@ h5, h6, p, a, label, input, button, table {
 
 @media (min-width: 1025px) and (max-width: 1366px) {
     .sidebar {
-        width: 210px; /* ou outro valor ideal para notebooks */
+        width: 210px; 
     }
     .main-content {
-        margin-left: 220px; /* ajuste para compensar a nova largura do sidebar */
+        margin-left: 220px;
     }
 }
 
@@ -180,13 +180,13 @@ h5, h6, p, a, label, input, button, table {
 }
 
 .logo-wrapper img:first-child {
-    max-height: 75px;  /* Diminuído de 90px */
+    max-height: 75px;  
     width: auto;
     margin-right: 15px;
 }
 
 .logo-wrapper img:last-child {
-    max-height: 75px;  /* Diminuído de 90px */
+    max-height: 75px;  
     width: auto;
     margin-left: 18px;
 }
@@ -238,7 +238,7 @@ h5, h6, p, a, label, input, button, table {
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 0.9rem; /* Ajuste sutil */
+    font-size: 0.9rem;
     transition: background-color 0.3s, color 0.3s, transform 0.2s, box-shadow 0.2s;
     min-width: 90px;
 }
@@ -253,7 +253,7 @@ h5, h6, p, a, label, input, button, table {
 /* Botão de Exportar para Excel */
 #export-button, #export-button-completo {
     padding: 7px 14px;
-    font-size: 0.8rem; /* Ajuste sutil */
+    font-size: 0.8rem; 
 }
 
 /* ==================================================
@@ -265,11 +265,11 @@ input[type="text"], input[type="number"] {
 }
 
 .main-content .form-label {
-    font-size: 0.85rem; /* Antes 0.9rem */
+    font-size: 0.85rem; 
 }
 
 .main-content .form-control::placeholder {
-    font-size: 0.75rem; /* Antes 0.8rem */
+    font-size: 0.75rem; 
 }
 
 /* ==================================================
@@ -280,8 +280,6 @@ input[type="text"], input[type="number"] {
     position: fixed;
     bottom: 10px;
     left: 10px;
-    font-size: 0.8rem; /* Antes 0.9rem */
+    font-size: 0.8rem; 
     color: #3c5f6e;
 }
-
-

@@ -230,7 +230,6 @@ layout = html.Div(
                                 data=[],
                                 style_table={
                                     'width': '110%',
-                                    #'minWidth': '700px',  # Define uma largura mínima para a tabela
                                     'overflowX': 'auto',
                                     'boxSizing': 'border-box',
                                     'border': '1px solid #FFA07A',
