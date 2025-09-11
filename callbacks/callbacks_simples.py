@@ -28,13 +28,28 @@ from PIL import Image
 
 # Função para converter valores de string no formato "000.000.000,00" para float
 def convert_to_float(value):
+    """Converte strings como '1.234,56', '1234.56', 'R$ 1 234,56' etc. em float.
+    Retorna 0.0 em caso de falha."""
     try:
-        if isinstance(value, str):
-            value = value.replace('.', '').replace(',', '.')
-        return float(value)
+        if value is None or value == "":
+            return 0.0
+        if isinstance(value, (int, float)):
+            return float(value)
+        s = str(value).strip().replace("\u00A0", " ")  # NBSP -> espaço normal
+        # remove tudo que não for dígitos, vírgula, ponto ou sinal
+        s = re.sub(r"[^\d,\.\-]", "", s)
+        if "," in s and "." in s:
+            # padrão pt-BR '1.234,56' -> '.' milhar, ',' decimal
+            s = s.replace(".", "").replace(",", ".")
+        elif "," in s:
+            # '1234,56' -> ',' decimal
+            s = s.replace(".", "").replace(",", ".")
+        else:
+            # '1,234.56' ou '1234.56' -> '.' decimal, remove vírgulas de milhar
+            s = s.replace(",", "")
+        return float(s)
     except (ValueError, TypeError):
-        return 0.0  
-
+        return 0.0
 # Função para converter float para string no formato "000.000.000,00"
 def convert_from_float(value):
     try:
@@ -95,7 +110,7 @@ def register_callbacks_simples(app):
             raise PreventUpdate
         
         if empreendimento == 'default':
-            return [None]*28
+            return [None]*12
         
         if empreendimento == 'economico':
             return [
@@ -468,7 +483,7 @@ def register_callbacks_simples(app):
 
         # Cálculo do CC/FIP
         cc_fip = valor_total_orcamento / qtd_lotes if qtd_lotes else 0.0
-        card_cc_fip = f"R$ {convert_from_float(cc_fip)}/m²"
+        card_cc_fip = f"R$ {convert_from_float(cc_fip)}/lote"
 
         # Calcular CC/AT (Custo de Construção por Área Total)
         cc_at = valor_total_orcamento / area_total if area_total else 0.0
@@ -480,7 +495,7 @@ def register_callbacks_simples(app):
         
         # Calcular CC/VGV (Custo de Construção por Valor Geral de Vendas)
         if vgv and vgv != 0 and area_lotes and area_lotes != 0 and qtd_lotes and qtd_lotes != 0:
-            cc_vgv_value = valor_total_orcamento / (area_lotes * vgv * qtd_lotes)
+            cc_vgv_value = valor_total_orcamento / (area_lotes * vgv * qtd_lotes) * 100.0
             card_cc_vgv = f"{convert_from_float(cc_vgv_value)}%"
         else:
             cc_vgv_value = 0.0
@@ -810,6 +825,7 @@ def register_callbacks_simples(app):
                 'comprimento_viario': 'Comprimento do Viário (m)',
                 'area_construida': 'Área Construída (m²)',
                 'area_quadra': 'Área da Quadra (m²)',
+                'qtd_lotes': 'Quantidade de Lotes', ### incluido
                 'dados_incc_antigo': 'Dados INCC Antigo',
                 'dados_incc_atual': 'Dados INCC Atual',
                 'volume_corte': 'Volume de Corte (m³)',
@@ -833,6 +849,7 @@ def register_callbacks_simples(app):
                 'id_loteamento', 'localizacao', 'revisao', 'vgv',
                 'area_total', 'perimetro', 'area_lotes', 'area_viario',
                 'comprimento_viario', 'area_construida', 'area_quadra',
+                'qtd_lotes', ### incluido
                 'dados_incc_antigo', 'dados_incc_atual', 'volume_corte',
                 'volume_aterro', 'volume_transporte'
             ]
@@ -853,7 +870,12 @@ def register_callbacks_simples(app):
                         key = dados_projeto_keys[index]
                         label = input_labels.get(key, key)
                         value = input_data.get(key, '')
-                        if isinstance(value, float):
+                        if key == 'qtd_lotes' and isinstance(value, (int, float)):
+                            try:
+                                value_str = str(int(round(value)))
+                            except Exception:
+                                value_str = str(value)
+                        elif isinstance(value, (int, float)):
                             value_str = convert_from_float(value)
                         else:
                             value_str = str(value)
@@ -1225,7 +1247,13 @@ def register_callbacks_simples(app):
 
             pdf.save()
             buffer.seek(0)
-            return dcc.send_bytes(buffer.getvalue(), filename="relatorio_simplificado.pdf")
+
+            # Função writer para gravar os bytes no stream
+            def write_pdf_bytes(f):
+                f.write(buffer.getvalue())
+
+            return dcc.send_bytes(write_pdf_bytes, "relatorio_simplificado.pdf")
+
 
         except Exception as e:
             print(f"Erro ao gerar o PDF: {e}")
