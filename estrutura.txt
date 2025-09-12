@@ -1,3 +1,5 @@
+## Estrutura
+
 - app.py          # Inicializa o app Dash e registra callbacks
 - index.txt       # link para fontes
 - layouts/        # Armazena os layouts de cada página

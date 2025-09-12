@@ -1,4 +1,4 @@
-# callbacks_simples.py
+## callbacks_simples.py
 
 import matplotlib
 matplotlib.use('Agg')  
@@ -428,32 +428,45 @@ def register_callbacks_simples(app):
         if not dados_incc_atual or dados_incc_atual == 0:
             return [], {}, "", "Dados INCC Atual não pode ser zero ou vazio.", "", "", ""
 
-        # Cálculos para os valores totais 
-        v1 = fechamento_perimetral * perimetro
-        v2 = meio_fio * (comprimento_viario * 2)
-        v3 = rede_eletrica * comprimento_viario
-        v4 = rede_agua * (comprimento_viario * 2)
-        v5 = rede_drenagem * comprimento_viario  
-        v6 = rede_esgoto * comprimento_viario
-        v7 = pavimentacao * area_viario
-        v8 = supressao_vegetacao * area_total
-        v9 = custo_terraplanagem * (volume_corte + volume_aterro + volume_transporte)
-        v10 = edificacoes * area_construida
-        v11 = quadra_society * area_quadra
+        # Cálculos para Coluna Quantitativo (Antigo)
+        #v1 = fechamento_perimetral * perimetro
+        #v2 = meio_fio * (comprimento_viario * 2)
+        #v3 = rede_eletrica * comprimento_viario
+        #v4 = rede_agua * (comprimento_viario * 2)
+        #v5 = rede_drenagem * comprimento_viario  
+        #v6 = rede_esgoto * comprimento_viario
+        #v7 = pavimentacao * area_viario
+        #v8 = supressao_vegetacao * area_total
+        #v9 = custo_terraplanagem * (volume_corte + volume_aterro + volume_transporte)
+        #v10 = edificacoes * area_construida
+        #v11 = quadra_society * area_quadra
 
-        # Cálculos para valores corrigidos (VALOR TOTAL)
+        # Cálculos para Coluna Quantitativo
+        v1 = perimetro
+        v2 = comprimento_viario * 2
+        v3 = comprimento_viario
+        v4 = comprimento_viario * 2
+        v5 = comprimento_viario  
+        v6 = comprimento_viario
+        v7 = area_viario
+        v8 = area_total
+        v9 = volume_corte + volume_aterro + volume_transporte
+        v10 = area_construida
+        v11 = area_quadra
+
+        # Cálculos para VALOR TOTAL
         fator_correcao = dados_incc_atual / dados_incc_antigo
-        ct1 = v1 * fator_correcao
-        ct2 = v2 * fator_correcao
-        ct3 = v3 * fator_correcao
-        ct4 = v4 * fator_correcao
-        ct5 = v5 * fator_correcao  
-        ct6 = v6 * fator_correcao
-        ct7 = v7 * fator_correcao
-        ct8 = v8 * fator_correcao
-        ct9 = v9 * fator_correcao
-        ct10 = v10 * fator_correcao
-        ct11 = v11 * fator_correcao
+        ct1 = (fechamento_perimetral * perimetro) * fator_correcao
+        ct2 = (meio_fio * (comprimento_viario * 2)) * fator_correcao
+        ct3 = (rede_eletrica * comprimento_viario) * fator_correcao
+        ct4 = (rede_agua * (comprimento_viario * 2)) * fator_correcao
+        ct5 = (rede_drenagem * comprimento_viario) * fator_correcao  
+        ct6 = (rede_esgoto * comprimento_viario) * fator_correcao
+        ct7 = (pavimentacao * area_viario) * fator_correcao
+        ct8 = (supressao_vegetacao * area_total) * fator_correcao
+        ct9 = (custo_terraplanagem * (volume_corte + volume_aterro + volume_transporte)) * fator_correcao
+        ct10 = (edificacoes * area_construida) * fator_correcao
+        ct11 = (quadra_society * area_quadra) * fator_correcao
 
         # Dados da tabela
         table_data = [

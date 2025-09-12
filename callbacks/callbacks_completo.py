@@ -1,4 +1,4 @@
-# callbacks_completo
+## callbacks_completo
 
 import matplotlib
 matplotlib.use('Agg')  # Define o backend não interativo
@@ -453,7 +453,7 @@ def register_callbacks_completo(app):
         diametro_comprimentos = [get_value(f'diametro-{d}-completo') for d in diametros]
         diametro_custos = [get_value(f'diametro-{d}-completo-custo') for d in diametros]
 
-        # Cálculos para os valores totais
+        # Cálculos para achar o VT
         vt1 = fechamento_perimetral * perimetro
         vt2 = meio_fio * (comprimento_viario * 2)
         vt3 = rede_eletrica * comprimento_viario
@@ -474,7 +474,7 @@ def register_callbacks_completo(app):
         vt10 = supressao_vegetacao * area_total
         vt11 = quadra_society * get_value('area-quadra-completo')
 
-        # Cálculos para valores corrigidos (VALOR TOTAL)
+        # Cálculos para coluna VALOR TOTAL CORRIGIDO
         fator_correcao = dados_incc_atual / dados_incc_antigo
         ct1 = vt1 * fator_correcao
         ct2 = vt2 * fator_correcao
@@ -490,19 +490,18 @@ def register_callbacks_completo(app):
 
         # Dados da tabela
         table_data = [
-            {"item": "Fechamento Perimetral", "custo_unitario": convert_from_float(fechamento_perimetral), "quantitativo": convert_from_float(perimetro), "valor_total_corrigido": convert_from_float(vt1)},                                          
-            {"item": "Meio fio", "custo_unitario": convert_from_float(meio_fio), "quantitativo": convert_from_float(comprimento_viario * 2), "valor_total_corrigido": convert_from_float(vt2)},                            
-            {"item": "Rede de Distribuição Elétrica", "custo_unitario": convert_from_float(rede_eletrica), "quantitativo": convert_from_float(comprimento_viario), "valor_total_corrigido": convert_from_float(vt3)},     
-            {"item": "Rede de Abastecimento de Água", "custo_unitario": convert_from_float(rede_agua), "quantitativo": convert_from_float(comprimento_viario * 2), "valor_total_corrigido": convert_from_float(vt4)},     
-            {"item": "Rede de Drenagem", "custo_unitario": convert_from_float(sum(diametro_custos) / len(diametro_custos) if diametro_custos else 0), "quantitativo": convert_from_float(sum(diametro_comprimentos)), "valor_total_corrigido": convert_from_float(vt5)},
-            {"item": "Rede de Coleta de Esgoto", "custo_unitario": convert_from_float(rede_esgoto), "quantitativo": convert_from_float(comprimento_viario), "valor_total_corrigido": convert_from_float(vt6)},      
-            {"item": "Pavimentação", "custo_unitario": convert_from_float((base_bgs * 0.21) + imprimacao + pintura + ((1182 / 12312.48) * cbuq)), "quantitativo": convert_from_float(area_viario), "valor_total_corrigido": convert_from_float(vt7)},
-            {"item": "Terraplenagem", "custo_unitario": convert_from_float((limpeza_camada_vegetal + volume_corte_custo + volume_aterro_custo + volume_transporte_custo) / 4), "quantitativo": convert_from_float(area_total), "valor_total_corrigido": convert_from_float(vt8)},                     
-            {"item": "Edificações", "custo_unitario": convert_from_float(edificacoes), "quantitativo": convert_from_float(get_value('area-construida-completo')), "valor_total_corrigido": convert_from_float(vt9)},
-            {"item": "Supressão de Vegetação", "custo_unitario": convert_from_float(supressao_vegetacao), "quantitativo": convert_from_float(area_total), "valor_total_corrigido": convert_from_float(vt10)},
-            {"item": "Quadra Society", "custo_unitario": convert_from_float(quadra_society), "quantitativo": convert_from_float(get_value('area-quadra-completo')), "valor_total_corrigido": convert_from_float(vt11)},
+            {"item": "Fechamento Perimetral", "custo_unitario": convert_from_float(fechamento_perimetral), "quantitativo": convert_from_float(perimetro), "valor_total_corrigido": convert_from_float(ct1)},                                          
+            {"item": "Meio fio", "custo_unitario": convert_from_float(meio_fio), "quantitativo": convert_from_float(comprimento_viario * 2), "valor_total_corrigido": convert_from_float(ct2)},                            
+            {"item": "Rede de Distribuição Elétrica", "custo_unitario": convert_from_float(rede_eletrica), "quantitativo": convert_from_float(comprimento_viario), "valor_total_corrigido": convert_from_float(ct3)},     
+            {"item": "Rede de Abastecimento de Água", "custo_unitario": convert_from_float(rede_agua), "quantitativo": convert_from_float(comprimento_viario * 2), "valor_total_corrigido": convert_from_float(ct4)},     
+            {"item": "Rede de Drenagem", "custo_unitario": convert_from_float(sum(diametro_custos) / len(diametro_custos) if diametro_custos else 0), "quantitativo": convert_from_float(sum(diametro_comprimentos)), "valor_total_corrigido": convert_from_float(ct5)},
+            {"item": "Rede de Coleta de Esgoto", "custo_unitario": convert_from_float(rede_esgoto), "quantitativo": convert_from_float(comprimento_viario), "valor_total_corrigido": convert_from_float(ct6)},      
+            {"item": "Pavimentação", "custo_unitario": convert_from_float((base_bgs * 0.21) + imprimacao + pintura + ((1182 / 12312.48) * cbuq)), "quantitativo": convert_from_float(area_viario), "valor_total_corrigido": convert_from_float(ct7)},
+            {"item": "Terraplenagem", "custo_unitario": convert_from_float((limpeza_camada_vegetal + volume_corte_custo + volume_aterro_custo + volume_transporte_custo) / 4), "quantitativo": convert_from_float(area_total), "valor_total_corrigido": convert_from_float(ct8)},                     
+            {"item": "Edificações", "custo_unitario": convert_from_float(edificacoes), "quantitativo": convert_from_float(get_value('area-construida-completo')), "valor_total_corrigido": convert_from_float(ct9)},
+            {"item": "Supressão de Vegetação", "custo_unitario": convert_from_float(supressao_vegetacao), "quantitativo": convert_from_float(area_total), "valor_total_corrigido": convert_from_float(ct10)},
+            {"item": "Quadra Society", "custo_unitario": convert_from_float(quadra_society), "quantitativo": convert_from_float(get_value('area-quadra-completo')), "valor_total_corrigido": convert_from_float(ct11)},
         ]
-
 
         # >>> Subtotal e Valor Total (com acréscimo de 20%) <<<
         subtotal = sum([ct1, ct2, ct3, ct4, ct5, ct6, ct7, ct8, ct9, ct10, ct11])

@@ -1,4 +1,4 @@
-# home_page.py
+## home_page.py
 
 from dash import html, dcc
 

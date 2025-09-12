@@ -1,4 +1,4 @@
-# callbacks_dashboards.py
+## callbacks_dashboards.py
 
 import os
 import pandas as pd
@@ -24,7 +24,7 @@ ITENS_VALIDOS = [
     "Supressão de Vegetação",
     "Terraplenagem",
     "Edificações"
-]
+] 
 
 # Lista de colunas esperadas para o novo modelo 
 EXPECTED_COLUMNS = ["Nome_Projeto", "Item", "Valor"]
