@@ -424,22 +424,9 @@ def register_callbacks_simples(app):
 
         # Verificar se os dados do INCC são válidos
         if not dados_incc_antigo or dados_incc_antigo == 0:
-            return [], {}, "", "Dados INCC Antigo não pode ser zero ou vazio.", "", "", ""
+            return [], {}, "", "Dados INCC Antigo não pode ser zero ou vazio.", "", "", "", ""
         if not dados_incc_atual or dados_incc_atual == 0:
-            return [], {}, "", "Dados INCC Atual não pode ser zero ou vazio.", "", "", ""
-
-        # Cálculos para Coluna Quantitativo (Antigo)
-        #v1 = fechamento_perimetral * perimetro
-        #v2 = meio_fio * (comprimento_viario * 2)
-        #v3 = rede_eletrica * comprimento_viario
-        #v4 = rede_agua * (comprimento_viario * 2)
-        #v5 = rede_drenagem * comprimento_viario  
-        #v6 = rede_esgoto * comprimento_viario
-        #v7 = pavimentacao * area_viario
-        #v8 = supressao_vegetacao * area_total
-        #v9 = custo_terraplanagem * (volume_corte + volume_aterro + volume_transporte)
-        #v10 = edificacoes * area_construida
-        #v11 = quadra_society * area_quadra
+            return [], {}, "", "Dados INCC Atual não pode ser zero ou vazio.", "", "", "", ""
 
         # Cálculos para Coluna Quantitativo
         v1 = perimetro

@@ -26,11 +26,10 @@ from PIL import Image
 def convert_to_float(value):
     try:
         if isinstance(value, str):
-            # Remove todos os pontos (separadores de milhares) e troca a vírgula pelo ponto como separador decimal
             value = value.replace('.', '').replace(',', '.')
         return float(value)
     except (ValueError, TypeError):
-        return 0.0  # Retorna 0.0 se a conversão falhar
+        return 0.0  
 
 # Função para converter float para string no formato "000.000.000,00"
 def convert_from_float(value):
@@ -61,12 +60,12 @@ def register_callbacks_completo(app):
 
         # Criar o link do Google Maps formatado
         base_url = "https://www.google.com/maps/search/?api=1&query="
-        formatted_address = address.replace(" ", "+")  # Substituir espaços por "+"
+        formatted_address = address.replace(" ", "+") 
         return base_url + formatted_address
 
 
     # ***************************
-    # Callback para salvar dados do formulário Orçamento Completo em dcc.Store -------------------------
+    # Callback para salvar dados do formulário Orçamento Completo em dcc.Store 
     # ***************************
     @app.callback(
         Output('shared-data-completo', 'data'),
