@@ -75,10 +75,7 @@ def register_callbacks_dashboards(app):
             return "⚠️ Por favor, envie as duas planilhas antes de gerar a análise!"
         return ""
 
-    # ***************************
     # callbacks para limpar dados
-    # ***************************
-
     @app.callback(
         [
             Output("upload-planilha-1", "contents"),
@@ -96,9 +93,7 @@ def register_callbacks_dashboards(app):
             raise PreventUpdate
         return None, None, None, None, "", "", ""
  
-    # ***************************
     # callbacks para ocultar gráficos
-    # ***************************
     @app.callback(
         Output("section-graficos", "style"),
         Input("generate-analysis-button", "n_clicks")
@@ -108,10 +103,7 @@ def register_callbacks_dashboards(app):
             return {"display": "block"}
         raise PreventUpdate
 
-
-    # ***************************
     # GRÁFICO COMPARATIVO (Bar Chart)
-    # ***************************
     @app.callback(
         Output("analysis-chart", "figure"),
         Input("generate-analysis-button", "n_clicks"),
@@ -189,7 +181,7 @@ def register_callbacks_dashboards(app):
                 color="black",
                 family="Arial"
             ),
-            textangle=0,  # Texto alinhado horizontalmente
+            textangle=0,
             cliponaxis=False,
             hovertemplate="<b>%{x}</b><br>Valor: %{y:.1f}<br>Percentual: %{customdata[0]:.0f}%<extra></extra>"
         ))
@@ -208,7 +200,7 @@ def register_callbacks_dashboards(app):
                 color="black",
                 family="Arial"
             ),
-            textangle=45,  # Texto inclinado em 45°
+            textangle=45,
             cliponaxis=False,
             hovertemplate="<b>%{x}</b><br>Valor: %{y:.1f}<br>Percentual: %{customdata[0]:.0f}%<extra></extra>"
         ))
@@ -216,7 +208,7 @@ def register_callbacks_dashboards(app):
         # Atualiza o layout do gráfico
         fig.update_layout(
             autosize=True,
-            height=700,  # Altura fixa para o gráfico
+            height=700,  
             barmode='group',
             title="Gráfico de Barras Comparativas",
             title_font=dict(color="#1D3B53", size=16, family="Arial Black"),
@@ -227,17 +219,12 @@ def register_callbacks_dashboards(app):
             paper_bgcolor="#DCE3EA",
             font=dict(size=12, color="#1D3B53"),
             legend=dict(title="Projeto", font=dict(color="#1D3B53")),
-            margin=dict(t=80)  # Ajuste conforme necessário
+            margin=dict(t=80) 
         )
-
-
 
         return fig
 
-
-    # ***************************
     # GRÁFICO DE COMPARAÇÃO (SLOPE CHART)
-    # ***************************
     @app.callback(
         Output("slope-chart", "figure"),
         Input("generate-analysis-button", "n_clicks"),
@@ -349,12 +336,7 @@ def register_callbacks_dashboards(app):
         )
         return fig
 
-
-
-
-    # ***************************
     # GRÁFICO RADAR
-    # ***************************
     @app.callback(
         Output("radar-chart", "figure"),
         Input("generate-analysis-button", "n_clicks"),
@@ -372,7 +354,7 @@ def register_callbacks_dashboards(app):
         decoded1 = base64.b64decode(content_string)
         df1 = pd.read_excel(io.BytesIO(decoded1))
         df1.columns = df1.columns.str.strip()
-        categories = ITENS_VALIDOS  # lista completa
+        categories = ITENS_VALIDOS
         df1_items = df1.set_index("Item")
         total1 = df1_items["Valor"].sum()
         percents1 = [(df1_items.loc[item, "Valor"] / total1 * 100) if item in df1_items.index else 0 for item in categories]
@@ -452,10 +434,6 @@ def register_callbacks_dashboards(app):
             margin=dict(t=160)
         )
         return fig
-
-
-
-
 
 # ------------------------- FUNÇÃO AUXILIAR PARA PROCESSAR UPLOADS ------------------------- #
 def process_uploaded_file(contents, filename, planilha_nome):
