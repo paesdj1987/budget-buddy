@@ -1,7 +1,7 @@
 ## callbacks_completo
 
 import matplotlib
-matplotlib.use('Agg')  # Define o backend não interativo
+matplotlib.use('Agg') 
 import io
 import tempfile
 import matplotlib.pyplot as plt
@@ -63,10 +63,7 @@ def register_callbacks_completo(app):
         formatted_address = address.replace(" ", "+") 
         return base_url + formatted_address
 
-
-    # ***************************
     # Callback para salvar dados do formulário Orçamento Completo em dcc.Store 
-    # ***************************
     @app.callback(
         Output('shared-data-completo', 'data'),
         [
@@ -188,7 +185,7 @@ def register_callbacks_completo(app):
         })
         return current_data
 
-    # Callback para carregar dados no formulário Orçamento Completo ao acessar a página -------------------------
+    # Callback para carregar dados no formulário Orçamento Completo ao acessar a página
     @app.callback(
         [
             Output('responsavel-relatorio-completo', 'value'),
@@ -305,7 +302,7 @@ def register_callbacks_completo(app):
             convert_from_float(data.get('diametro-1000-completo-custo', 0)),
         ]
 
-    # Callback para gerar o Relatório Completo -------------------------
+    # Callback para gerar o Relatório Completo
     @app.callback(
         Output('url', 'pathname'),
         Input('generate-report-button-completo', 'n_clicks'),
@@ -371,7 +368,7 @@ def register_callbacks_completo(app):
         "diametro-1000-completo-custo",
     ]
 
-    # Callback para limpar o formulário Orçamento Completo -------------------------
+    # Callback para limpar o formulário Orçamento Completo
     @app.callback(
         [Output(field_id, "value") for field_id in FIELDS_TO_CLEAR_COMPLETO] + [Output("shared-data-completo", "data")],
         Input("clear-data-button-completo", "n_clicks")
@@ -382,7 +379,7 @@ def register_callbacks_completo(app):
         return [None] * len(FIELDS_TO_CLEAR_COMPLETO) + [None]
 
 
-    # Callback para atualizar a tabela, gráficos e cards no Relatório Completo -------------------------
+    # Callback para atualizar a tabela, gráficos e cards no Relatório Completo
     @app.callback(
         [
             Output('results-table-completo', 'data'),
@@ -531,7 +528,7 @@ def register_callbacks_completo(app):
             cc_vgv_value = 0.0
             card_cc_vgv = "0,00"
 
-        # ************************ Gráfico *************************
+        # Gráfico
         
         itens = [row["item"] for row in table_data]
         valores_float = [convert_to_float(row["valor_total_corrigido"]) for row in table_data]
@@ -620,10 +617,7 @@ def register_callbacks_completo(app):
             card_cc_vgv          
         )
 
-
-    # ====================================================================================
     # Callback para exportar a tabela para Excel 
-    # ====================================================================================
     @app.callback(
         Output("download-dataframe-xlsx-completo", "data"),
         Input("export-button-completo", "n_clicks"),
@@ -642,9 +636,7 @@ def register_callbacks_completo(app):
             df.to_excel, "relatorio_completo.xlsx", sheet_name="Relatório Completo", index=False                     
         )
 
-    # ====================================================================================
     # CALLBACK PARA GERAR PDF (Orçamento Simplificado)
-    # ====================================================================================
     @app.callback(
         Output('download-pdf-completo', 'data'),
         [Input('generate-pdf-button-completo', 'n_clicks')],
@@ -675,18 +667,14 @@ def register_callbacks_completo(app):
                 raise PreventUpdate
 
             try:
-                # -----------------------------------------------------------------------------
                 # Configurações iniciais de PDF e cores
-                # -----------------------------------------------------------------------------
                 buffer = io.BytesIO()
                 pdf = canvas.Canvas(buffer, pagesize=landscape(letter))
                 pdf.setTitle("Orçamento Completo")
 
                 pagina_largura, pagina_altura = landscape(letter)
 
-                # -----------------------------------------------------------------------------
                 # PÁGINA 1 (Capa)
-                # -----------------------------------------------------------------------------
                 pdf.setFillColor(HexColor("#3d5462"))
                 pdf.rect(0, 0, pagina_largura, pagina_altura, fill=1)  # fundo
 
@@ -700,7 +688,6 @@ def register_callbacks_completo(app):
                     titulo_capa
                 )
 
-                # Inserir logo na capa
                 try:
                     capa_logo = "assets/logoor2.png"
                     max_width = 300
@@ -766,9 +753,7 @@ def register_callbacks_completo(app):
 
                 pdf.showPage()
 
-                # -----------------------------------------------------------------------------
                 # PÁGINA 2 - Resultados + Dados do Orçamento Completo (Atualizado)
-                # -----------------------------------------------------------------------------
                 bar_height = 60
                 pdf.setFillColor(HexColor("#3d5462"))
                 pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
@@ -830,7 +815,7 @@ def register_callbacks_completo(app):
                 y_position -= 20  # Espaço extra após a linha
 
                 # 2) Exibir o campo "info-geral-completo"
-                pdf.setFillColor(HexColor("#283747"))  # Azul Petróleo Profundo
+                pdf.setFillColor(HexColor("#283747")) 
                 info_geral = input_data.get('info-geral-completo', '')
                 pdf.setFont("Helvetica-Bold", 10)
                 pdf.drawString(50, y_position, "Informações Gerais:")
@@ -858,9 +843,7 @@ def register_callbacks_completo(app):
                 pdf.setStrokeColor(HexColor("#000000"))
                 y_position -= 20
 
-                # --------------------------------------------------
                 # Definição dos rótulos para os inputs
-                # --------------------------------------------------
                 input_labels = {
                     'info-geral-completo': 'Informações Gerais',
                     'id-loteamento-completo': 'ID Condomínios Horizontais',
@@ -910,9 +893,7 @@ def register_callbacks_completo(app):
                     'diametro-1000-completo-custo': 'Custo Diâmetro 1000 mm (cc/m)',
                 }
 
-                # --------------------------------------------------
                 # Seção: Dados do Projeto (24 itens)
-                # --------------------------------------------------
                 dados_projeto_keys = [
                     'id-loteamento-completo',
                     'localizacao-completo',
@@ -977,9 +958,7 @@ def register_callbacks_completo(app):
                 pdf.setStrokeColor(HexColor("#000000"))
                 y_position -= 20
 
-                # --------------------------------------------------
                 # Seção: Custos Unitário (23 itens)
-                # --------------------------------------------------
                 custo_unitario_keys = [
                     'fechamento-perimetral-completo',
                     'meio-fio-completo',
@@ -1039,10 +1018,7 @@ def register_callbacks_completo(app):
                 # Encerrar PÁGINA 2
                 pdf.showPage()
 
-
-                # -----------------------------------------------------------------------------
                 # PÁGINA 3 - Tabela (Resultados)
-                # -----------------------------------------------------------------------------
                 bar_height = 60
                 pdf.setFillColor(HexColor("#3d5462"))
                 pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
@@ -1082,7 +1058,7 @@ def register_callbacks_completo(app):
 
 
                 # Cabeçalhos da tabela
-                pdf.setFillColor(HexColor("#4B2C20"))  # Marrom Terra Profundo
+                pdf.setFillColor(HexColor("#4B2C20"))
                 pdf.setFont("Helvetica-Bold", 10)
                 headers = ["Item", "Valor Total Corrigido"]
                 x_positions_table = [50, 250]  
@@ -1094,14 +1070,14 @@ def register_callbacks_completo(app):
                 pdf.setFont("Helvetica", 9)
                 row_height = 18  
 
-                total_valor_completo = 0  # Inicializa o total
+                total_valor_completo = 0
                 
                 
                 for row in table_data:
                     item_name = row.get('item', '')
                     valor_corrigido = convert_to_float(row.get('valor_total_corrigido', 0.0))
                     valor_str = f"R$ {valor_corrigido:.2f}".replace('.', ',')
-                    total_valor_completo += valor_corrigido  # Soma ao total
+                    total_valor_completo += valor_corrigido
 
                     pdf.setFont("Helvetica-Bold", 8)
                     pdf.drawString(x_positions_table[0], y_position, str(item_name))
@@ -1109,7 +1085,7 @@ def register_callbacks_completo(app):
                     pdf.setFont("Helvetica", 8)
                     pdf.drawString(x_positions_table[1], y_position, valor_str)
 
-                    y_position -= row_height  # Altura entre os itens
+                    y_position -= row_height 
 
                     if y_position < 50:
                         pdf.showPage()
@@ -1120,7 +1096,7 @@ def register_callbacks_completo(app):
                 subtotal_valor_corrigido_completo = total_valor_completo * 0.2
 
                 # Inserir linha separadora antes do subtotal e total
-                pdf.setStrokeColor(HexColor("#FF9999"))  # Vermelho
+                pdf.setStrokeColor(HexColor("#FF9999")) 
                 pdf.setLineWidth(1)
                 pdf.line(50, y_position, pagina_largura - 450, y_position)
                 pdf.setStrokeColor(HexColor("#000000"))
@@ -1134,7 +1110,7 @@ def register_callbacks_completo(app):
                 y_position -= 10
 
                 # Inserir linha vermelha entre o subtotal e o total
-                pdf.setStrokeColor(HexColor("#FFA500"))  # Laranja
+                pdf.setStrokeColor(HexColor("#FFA500")) 
                 pdf.setLineWidth(0.5)
                 pdf.line(50, y_position, pagina_largura - 450, y_position)
                 pdf.setStrokeColor(HexColor("#000000"))
@@ -1148,9 +1124,7 @@ def register_callbacks_completo(app):
 
                 pdf.showPage()
 
-                # --------------------------------------------------------------------------------
                 # PÁGINA 4 - Gráfico (Participação Percentual dos Serviços)
-                # --------------------------------------------------------------------------------
                 bar_height = 60
                 pdf.setFillColor(HexColor("#3d5462"))
                 pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
@@ -1267,11 +1241,7 @@ def register_callbacks_completo(app):
                 pdf.showPage()
 
 
-
-                # --------------------------------------------------------------------------------
                 # PÁGINA 5 - Gráfico (Custo de Construção)
-                # --------------------------------------------------------------------------------
-                
                 bar_height = 60
                 pdf.setFillColor(HexColor("#3d5462"))
                 pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
