@@ -59,16 +59,13 @@ def convert_from_float(value):
 
 
 def register_callbacks_simples(app):
-    # Definir cores personalizadas (custom_colors)
     custom_colors = [
         '#FFF3E0', '#FFE0B2', '#FFCC80', '#FFB74D', '#FFA726',
         '#FF9800', '#FB8C00', '#F57C00', '#EF6C00', '#E65100',
         '#DD2C00'
     ]
 
-    # ***************************
     # Callback para atualizar o link do Google Maps no ícone
-    # ***************************
     @app.callback(
         Output("maps-link", "href"),
         Input("localizacao", "value")
@@ -82,11 +79,7 @@ def register_callbacks_simples(app):
         formatted_address = address.replace(" ", "+")  
         return base_url + formatted_address
 
-    
-
-    # ***************************
     # Callback para preenchimento da lista suspensa 
-    # ***************************
     @app.callback(
     [
         Output('fechamento-perimetral', 'value'),
@@ -146,9 +139,8 @@ def register_callbacks_simples(app):
 
         return [None]*12
     
-    # ***************************
-    # Callback para salvar dados do formulário Orçamento Simples em dcc.Store 
-    # ***************************
+
+    # Callback para salvar dados do formulário Orçamento Simples
     @app.callback(
         Output('shared-data', 'data'),
         [
@@ -231,7 +223,7 @@ def register_callbacks_simples(app):
         })
         return current_data
 
-    # Callback para carregar os dados do dcc.Store nos inputs quando a página é acessada -------------------------
+    # Callback para carregar os dados do dcc.Store nos inputs quando a página é acessada
     @app.callback(
         [
             Output('responsavel-relatorio-simples', 'value'),
@@ -310,7 +302,7 @@ def register_callbacks_simples(app):
             convert_from_float(data.get('quadra_society', 0)),
         ]
 
-    # Callback para gerar o relatório simples -------------------------
+    # Callback para gerar o relatório simples
     @app.callback(
         Output('url', 'pathname'),
         [Input('generate-report-button', 'n_clicks')],
@@ -357,7 +349,7 @@ def register_callbacks_simples(app):
         "quadra-society",
     ]
 
-    # Callback para limpar os campos do formulário Orçamento Simples -------------------------
+    # Callback para limpar os campos do formulário Orçamento Simples
     @app.callback(
         [Output(field, "value") for field in FIELDS_TO_CLEAR] + [Output('shared-data', 'data')],
         Input("clear-button", "n_clicks")
@@ -368,7 +360,7 @@ def register_callbacks_simples(app):
         return [None] * len(FIELDS_TO_CLEAR) + [None]
 
     
-    # Callback para atualizar a tabela, os cards e gerar o gráfico de barras na página Relatório Simples -------------------------
+    # Callback para atualizar a tabela, os cards e gerar o gráfico de barras na página Relatório Simples
     @app.callback(
         [
             Output('results-table', 'data'),
@@ -591,18 +583,16 @@ def register_callbacks_simples(app):
                 categoryorder="total ascending",
             ),
             paper_bgcolor="white",
-            plot_bgcolor="white",                  # Fundo branco
-            margin=dict(l=120, r=40, t=80, b=50),  # Margens ajustadas
-            height=600,                            # Altura do gráfico
+            plot_bgcolor="white",                  
+            margin=dict(l=120, r=40, t=80, b=50),  
+            height=600,                            
         )
 
         # Exibir o gráfico atualizado
         return table_data, fig, card_id_loteamento, card_valor_total, card_cc_fip, card_cc_at, card_cc_ap, card_cc_vgv
 
 
-    # ====================================================================================
     # Callback para exportar a tabela para Excel 
-    # ====================================================================================
     @app.callback(
         Output("download-dataframe-xlsx", "data"),
         [Input("export-button", "n_clicks")],
@@ -621,9 +611,8 @@ def register_callbacks_simples(app):
             df.to_excel, "relatorio_simples.xlsx", sheet_name="Relatório Simples", index=False
         )
 
-    # ====================================================================================
+
     # CALLBACK PARA GERAR PDF (Orçamento Simplificado)
-    # ====================================================================================
     @app.callback(
         Output('download-pdf', 'data'),
         [Input('generate-pdf-button', 'n_clicks')],
@@ -728,7 +717,7 @@ def register_callbacks_simples(app):
             pdf.setFillColor(HexColor("#3d5462"))
             pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
 
-            # Inserir a logoor2.png à esquerda da barra
+            # Inserir a logoor2.png
             logo_path = "assets/logoor2.png"
             try:
                 logo_y = pagina_altura - bar_height + (bar_height - 40) / 2
@@ -736,14 +725,14 @@ def register_callbacks_simples(app):
             except Exception as e:
                 print(f"Erro ao inserir a logo esquerda: {e}")
 
-            # Inserir o simbolo_or.png à direita da barra
+            # Inserir o simbolo_or.png
             simbolo_path = "assets/simbolo_or.png"
             try:
                 pdf.drawImage(simbolo_path, x=pagina_largura - 90, y=logo_y, width=55, height=35, mask='auto')
             except Exception as e:
                 print(f"Erro ao inserir o símbolo direito: {e}")
 
-            # Inserir o título dentro da barra, centralizado
+            # Inserir o título dentro da barra
             pdf.setFont("Helvetica-Bold", 16)
             titulo_texto = "Orçamento Simplificado"
             titulo_largura = pdf.stringWidth(titulo_texto, "Helvetica-Bold", 16)
@@ -929,9 +918,7 @@ def register_callbacks_simples(app):
 
             pdf.showPage()
 
-            # --------------------------------------------------------------------------------
             # PÁGINA 3 (seção "Custo por Item de Execução")
-            # --------------------------------------------------------------------------------
             bar_height = 60
             pdf.setFillColor(HexColor("#3d5462"))
             pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
@@ -1021,9 +1008,7 @@ def register_callbacks_simples(app):
             pdf.drawString(x_positions_table[1], y_position, f"R$ {convert_from_float(total_valor)}")
             pdf.showPage()
 
-            # --------------------------------------------------------------------------------
             # PÁGINA 4 (Gráfico - Participação Percentual dos Serviços)
-            # --------------------------------------------------------------------------------
             bar_height = 60
             pdf.setFillColor(HexColor("#3d5462"))
             pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
@@ -1139,10 +1124,7 @@ def register_callbacks_simples(app):
 
             pdf.showPage()
 
-
-            # --------------------------------------------------------------------------------
             # PÁGINA 5 (Gráfico - Custo de Construção)
-            # --------------------------------------------------------------------------------
             bar_height = 60
             pdf.setFillColor(HexColor("#3d5462"))
             pdf.rect(0, pagina_altura - bar_height, pagina_largura, bar_height, fill=1)
@@ -1172,7 +1154,6 @@ def register_callbacks_simples(app):
 
             # Ajustar a posição do conteúdo abaixo da barra
             y_position = pagina_altura - bar_height - 40
-
 
             def to_float(valor_str):
                 if not isinstance(valor_str, str):
